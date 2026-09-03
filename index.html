@@ -419,6 +419,22 @@ function seedData(){
         ],
         payments: [ {id: uid(), date:'2026-08-14', value:2190.00, method:'PIX (parte 2)'} ],
         notes:'Serviço cobrado em duas partes — esta é a 2ª parte.', overdue:false
+      },
+      {
+        id: uid(), clientId: clientB, date:'2026-09-02', description:'Compra sob demanda — 1ª parte (setembro)',
+        type:'Compra sob demanda', saleValue: 2190.00,
+        costs: [
+          {id: uid(), category:'Compras', description:'Atacadão', value:388.73, hasReceipt:true},
+          {id: uid(), category:'Compras', description:'Mercado Ponto Alto', value:91.06, hasReceipt:true},
+          {id: uid(), category:'Compras', description:'Cielo / São Jorge Auto Posto', value:50.00, hasReceipt:true},
+          {id: uid(), category:'Compras', description:'W. L. Comércio Varejista', value:97.69, hasReceipt:true},
+          {id: uid(), category:'Compras', description:'Supermercado Tático', value:439.53, hasReceipt:true},
+          {id: uid(), category:'Compras', description:'Comercial MSP Ltda.', value:20.98, hasReceipt:true},
+          {id: uid(), category:'Gasolina', description:'Gasolina (dia da compra)', value:50.00, hasReceipt:false},
+          {id: uid(), category:'Outros', description:'Almoço (dia da compra)', value:61.00, hasReceipt:false},
+        ],
+        payments: [],
+        notes:'Serviço cobrado em duas partes (mês 09) — esta é a 1ª parte. Frete só entra na 2ª parte. Pagamento previsto a partir do dia 10.', overdue:false
       }
     ],
     purchases: [],
