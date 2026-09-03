@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<meta name="description" content="Sistema de gestão financeira e operacional da ABA Alimentos e Distribuição: dashboard, clientes, pedidos, custos e pagamentos.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232d6a4f'/%3E%3Ctext x='12' y='17' font-family='Arial,sans-serif' font-weight='700' font-size='14' fill='%23eafff2' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
 <title>ABA Gestão · Controle Financeiro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,6 +56,7 @@ body{
 button{ font-family: inherit; cursor:pointer; }
 input, select, textarea{ font-family: inherit; }
 a{ color: inherit; }
+button:focus-visible, a:focus-visible, .nav-item:focus-visible{ outline: 2px solid var(--green-400); outline-offset: 2px; }
 ::-webkit-scrollbar{ width:10px; height:10px; }
 ::-webkit-scrollbar-track{ background:transparent; }
 ::-webkit-scrollbar-thumb{ background: var(--border); border-radius: 10px; }
@@ -279,10 +282,6 @@ tbody tr:last-child td{ border-bottom:none; }
 .totals-mini{ display:flex; justify-content:space-between; font-size:12.5px; color:var(--text-dim); padding-top:8px; margin-top:4px; border-top:1px solid var(--border); }
 .totals-mini b{ color:var(--beige); font-family:var(--font-mono); }
 
-.file-drop{ border:1.5px dashed var(--border); border-radius:9px; padding:12px; text-align:center; font-size:12px; color:var(--text-faint); cursor:pointer; }
-.file-drop:hover{ border-color: var(--green-500); color:var(--text-dim); }
-.receipt-thumb{ width:38px; height:38px; border-radius:6px; object-fit:cover; border:1px solid var(--border); flex-shrink:0;}
-
 /* ---------- Calculator ---------- */
 .calc-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:22px; align-items:start; }
 @media (max-width: 900px){ .calc-grid{ grid-template-columns:1fr; } }
@@ -394,7 +393,7 @@ function seedData(){
           {id: uid(), category:'Frete', description:'Frete da entrega', value:45.00, hasReceipt:false},
         ],
         payments: [ {id: uid(), date:'2026-08-04', value:704.00, method:'PIX'} ],
-        notes:'', receipts: [], overdue:false
+        notes:'', overdue:false
       },
       {
         id: uid(), clientId: clientB, date:'2026-07-24', description:'Compra sob demanda — 1ª parte',
@@ -405,7 +404,7 @@ function seedData(){
           {id: uid(), category:'Entrega', description:'Entrega (1ª parte)', value:25.00, hasReceipt:false},
         ],
         payments: [ {id: uid(), date:'2026-07-24', value:2190.00, method:'PIX (parte 1)'} ],
-        notes:'Serviço cobrado em duas partes — esta é a 1ª parte.', receipts: [], overdue:false
+        notes:'Serviço cobrado em duas partes — esta é a 1ª parte.', overdue:false
       },
       {
         id: uid(), clientId: clientB, date:'2026-08-14', description:'Compra sob demanda — 2ª parte',
@@ -419,7 +418,7 @@ function seedData(){
           {id: uid(), category:'Entrega', description:'Entrega (2ª parte)', value:25.00, hasReceipt:false},
         ],
         payments: [ {id: uid(), date:'2026-08-14', value:2190.00, method:'PIX (parte 2)'} ],
-        notes:'Serviço cobrado em duas partes — esta é a 2ª parte.', receipts: [], overdue:false
+        notes:'Serviço cobrado em duas partes — esta é a 2ª parte.', overdue:false
       }
     ],
     purchases: [],
@@ -440,7 +439,14 @@ function loadDB(){
     const seed = seedData(); localStorage.setItem(DB_KEY, JSON.stringify(seed)); return seed;
   }
 }
-function saveDB(){ localStorage.setItem(DB_KEY, JSON.stringify(DB)); }
+function saveDB(){
+  try{
+    localStorage.setItem(DB_KEY, JSON.stringify(DB));
+  }catch(e){
+    console.error('Erro ao salvar dados.', e);
+    toast('Não foi possível salvar. Espaço de armazenamento do navegador pode estar cheio.', 'error');
+  }
+}
 let DB = loadDB();
 
 /* ---------- Utilitários ---------- */
@@ -451,13 +457,16 @@ function fmtBRL(n){
 }
 function fmtPct(n){ if(!isFinite(n)) n = 0; return n.toLocaleString('pt-BR',{minimumFractionDigits:1, maximumFractionDigits:1}) + '%'; }
 function fmtDate(d){ if(!d) return '—'; const dt = new Date(d+'T00:00:00'); if(isNaN(dt)) return d; return dt.toLocaleDateString('pt-BR'); }
-function todayISO(){ return new Date().toISOString().slice(0,10); }
+function toISODate(dt){ return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
+function todayISO(){ return toISODate(new Date()); }
 function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-function toast(msg){
+function toast(msg, type){
   const root = document.getElementById('toastRoot');
   const el = document.createElement('div');
   el.className = 'toast';
-  el.innerHTML = `${ic('check','')} <span>${escapeHtml(msg)}</span>`;
+  el.setAttribute('role','status');
+  if(type==='error') el.style.borderColor = 'var(--red-dim)';
+  el.innerHTML = `${ic(type==='error'?'alert':'check','')} <span>${escapeHtml(msg)}</span>`;
   root.innerHTML = '';
   root.appendChild(el);
   setTimeout(()=>{ el.remove(); }, 2600);
@@ -512,7 +521,7 @@ const state = {
 function getPeriodRange(){
   const now = new Date();
   const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
-  const iso = (dt)=> dt.toISOString().slice(0,10);
+  const iso = toISODate;
   switch(state.periodType){
     case 'today': { const t = iso(now); return [t,t]; }
     case 'week': {
@@ -577,7 +586,7 @@ function appShell(){
   </aside>
   <main class="main">
     <div class="mobile-topbar">
-      <button onclick="state.sidebarOpen=true; render();">${ic('menu')}</button>
+      <button onclick="state.sidebarOpen=true; render();" aria-label="Abrir menu">${ic('menu')}</button>
       <div class="brand-text"><div class="t1" style="font-size:14px">ABA Gestão</div></div>
     </div>
     <div id="viewRoot"></div>
@@ -826,8 +835,8 @@ function buildDashboardCharts(){
   const labels = months.map(d=> d.toLocaleDateString('pt-BR',{month:'short'}).replace('.','') );
   const revData=[], costData=[], profitData=[];
   months.forEach(d=>{
-    const start = new Date(d.getFullYear(), d.getMonth(),1).toISOString().slice(0,10);
-    const end = new Date(d.getFullYear(), d.getMonth()+1,0).toISOString().slice(0,10);
+    const start = toISODate(new Date(d.getFullYear(), d.getMonth(),1));
+    const end = toISODate(new Date(d.getFullYear(), d.getMonth()+1,0));
     const os = ordersInRange(start,end);
     const t = periodTotals(os);
     revData.push(t.revenue.toFixed(2)); costData.push(t.cost.toFixed(2)); profitData.push(t.profit.toFixed(2));
@@ -905,7 +914,7 @@ function renderClients(){
           <td class="td-num">${orders.length}</td>
           <td class="td-num">${fmtBRL(t.revenue)}</td>
           <td class="td-num" style="color:${t.profit>=0?'#7fe0ab':'#f0aeb1'}">${fmtBRL(t.profit)}</td>
-          <td class="td-actions"><button class="icon-btn" onclick="event.stopPropagation(); openClientModal('${c.id}')">${ic('edit')}</button></td>
+          <td class="td-actions"><button class="icon-btn" onclick="event.stopPropagation(); openClientModal('${c.id}')" aria-label="Editar cliente">${ic('edit')}</button></td>
         </tr>`;
       }).join('')}
     </tbody></table></div>`}
@@ -1025,7 +1034,7 @@ function renderOrders(){
         <td class="td-num">${fmtBRL(orderTotalCost(o))}</td>
         <td class="td-num" style="color:${orderGrossProfit(o)>=0?'#7fe0ab':'#f0aeb1'}">${fmtBRL(orderGrossProfit(o))}</td>
         <td class="td-num">${marginBadge(orderMargin(o))}</td>
-        <td class="td-actions"><button class="icon-btn" onclick="event.stopPropagation(); deleteOrder('${o.id}')">${ic('trash')}</button></td>
+        <td class="td-actions"><button class="icon-btn" onclick="event.stopPropagation(); deleteOrder('${o.id}')" aria-label="Excluir pedido">${ic('trash')}</button></td>
       </tr>`).join('')}
     </tbody></table></div>`}
   `;
@@ -1066,7 +1075,7 @@ function renderPurchases(){
         <td>${p.clientId ? escapeHtml(clientName(p.clientId)) : '<span class="client-row-sub">—</span>'}</td>
         <td>${p.hasReceipt ? '<span class="badge badge-green">Com comprovante</span>' : '<span class="badge badge-gray">Sem comprovante — já lançada</span>'}</td>
         <td class="td-num">${fmtBRL(p.total)}</td>
-        <td class="td-actions"><button class="icon-btn" onclick="event.stopPropagation(); deletePurchase('${p.id}')">${ic('trash')}</button></td>
+        <td class="td-actions"><button class="icon-btn" onclick="event.stopPropagation(); deletePurchase('${p.id}')" aria-label="Excluir compra">${ic('trash')}</button></td>
       </tr>`).join('')}
     </tbody></table></div>`}
   `;
@@ -1094,7 +1103,7 @@ function renderSettings(){
       <div id="catList">
         ${cats.map((c,i)=> `<div class="mini-row">
           <div class="mr-desc">${escapeHtml(c)}</div>
-          ${['Compras','Frete','Gasolina','Entrega','Outros'].includes(c) ? '' : `<button class="icon-btn" onclick="removeCategory(${i})">${ic('trash')}</button>`}
+          ${['Compras','Frete','Gasolina','Entrega','Outros'].includes(c) ? '' : `<button class="icon-btn" onclick="removeCategory(${i})" aria-label="Remover categoria ${escapeHtml(c)}">${ic('trash')}</button>`}
         </div>`).join('')}
       </div>
       <div class="add-row-form">
@@ -1121,8 +1130,9 @@ function addCategory(){
   saveDB(); render(); toast('Categoria adicionada.');
 }
 function removeCategory(i){
+  if(!confirm('Remover esta categoria de custo? Custos já lançados com ela continuam existindo, mas ela não aparecerá mais nas opções.')) return;
   DB.settings.costCategories.splice(i,1);
-  saveDB(); render();
+  saveDB(); render(); toast('Categoria removida.');
 }
 function exportData(){
   const blob = new Blob([JSON.stringify(DB,null,2)], {type:'application/json'});
@@ -1157,17 +1167,17 @@ function renderCalculator(){
       <div class="card">
         <div class="section-title" style="margin:0 0 14px;">Dados da venda</div>
         <div class="field-row">
-          <div class="field"><label>Quantidade</label><input type="number" min="1" step="1" id="c_qty" value="${calcState.qty}" oninput="updateCalc('qty',this.value)"></div>
-          <div class="field"><label>Preço de venda (unitário)</label><input type="number" min="0" step="0.01" id="c_unitPrice" value="${calcState.unitPrice}" oninput="updateCalc('unitPrice',this.value)"></div>
+          <div class="field"><label for="c_qty">Quantidade</label><input type="number" min="1" step="1" id="c_qty" value="${calcState.qty}" oninput="updateCalc('qty',this.value)"></div>
+          <div class="field"><label for="c_unitPrice">Preço de venda (unitário)</label><input type="number" min="0" step="0.01" id="c_unitPrice" value="${calcState.unitPrice}" oninput="updateCalc('unitPrice',this.value)"></div>
         </div>
-        <div class="field"><label>Custo dos produtos (unitário)</label><input type="number" min="0" step="0.01" id="c_unitCost" value="${calcState.unitCost}" oninput="updateCalc('unitCost',this.value)"></div>
+        <div class="field"><label for="c_unitCost">Custo dos produtos (unitário)</label><input type="number" min="0" step="0.01" id="c_unitCost" value="${calcState.unitCost}" oninput="updateCalc('unitCost',this.value)"></div>
         <div class="field-row">
-          <div class="field"><label>Frete (total)</label><input type="number" min="0" step="0.01" id="c_freight" value="${calcState.freight}" oninput="updateCalc('freight',this.value)"></div>
-          <div class="field"><label>Gasolina (total)</label><input type="number" min="0" step="0.01" id="c_gas" value="${calcState.gas}" oninput="updateCalc('gas',this.value)"></div>
+          <div class="field"><label for="c_freight">Frete (total)</label><input type="number" min="0" step="0.01" id="c_freight" value="${calcState.freight}" oninput="updateCalc('freight',this.value)"></div>
+          <div class="field"><label for="c_gas">Gasolina (total)</label><input type="number" min="0" step="0.01" id="c_gas" value="${calcState.gas}" oninput="updateCalc('gas',this.value)"></div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Entrega (total)</label><input type="number" min="0" step="0.01" id="c_delivery" value="${calcState.delivery}" oninput="updateCalc('delivery',this.value)"></div>
-          <div class="field"><label>Outros custos (total)</label><input type="number" min="0" step="0.01" id="c_other" value="${calcState.other}" oninput="updateCalc('other',this.value)"></div>
+          <div class="field"><label for="c_delivery">Entrega (total)</label><input type="number" min="0" step="0.01" id="c_delivery" value="${calcState.delivery}" oninput="updateCalc('delivery',this.value)"></div>
+          <div class="field"><label for="c_other">Outros custos (total)</label><input type="number" min="0" step="0.01" id="c_other" value="${calcState.other}" oninput="updateCalc('other',this.value)"></div>
         </div>
         <div class="field-hint">Dica: para simular uma venda como "10 cestas a R$ 65,90", informe a quantidade e o preço unitário — a receita é calculada automaticamente.</div>
       </div>
@@ -1176,7 +1186,7 @@ function renderCalculator(){
   `;
 }
 function updateCalc(key, val){
-  calcState[key] = key==='qty' ? Math.max(1, parseInt(val)||1) : (parseFloat(val)||0);
+  calcState[key] = key==='qty' ? Math.max(1, parseInt(val)||1) : Math.max(0, parseFloat(val)||0);
   renderCalcResult();
 }
 function renderCalcResult(){
@@ -1214,12 +1224,15 @@ function renderCalcResult(){
 function closeModal(){
   document.getElementById('modalRoot').innerHTML = '';
 }
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Escape' && document.getElementById('modalOverlay')) closeModal();
+});
 function modalShell(title, bodyHtml, footHtml){
   return `<div class="modal-overlay open" id="modalOverlay" onclick="if(event.target.id==='modalOverlay') closeModal();">
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitleText">
       <div class="modal-head">
-        <div class="modal-title">${title}</div>
-        <button class="modal-close" onclick="closeModal()">${ic('x')}</button>
+        <div class="modal-title" id="modalTitleText">${title}</div>
+        <button class="modal-close" onclick="closeModal()" aria-label="Fechar">${ic('x')}</button>
       </div>
       <div class="modal-body">${bodyHtml}</div>
       <div class="modal-foot">${footHtml}</div>
@@ -1234,23 +1247,23 @@ function openClientModal(id){
   const editing = id ? DB.clients.find(c=>c.id===id) : null;
   const c = editing || { id:null, name:'', doc:'', phone:'', whatsapp:'', address:'', cep:'', city:'', notes:'', status:'ativo' };
   const body = `
-    <div class="field"><label>Nome do cliente *</label><input id="f_name" value="${escapeHtml(c.name)}" placeholder="Ex: Creche Renascer"></div>
+    <div class="field"><label for="f_name">Nome do cliente *</label><input id="f_name" value="${escapeHtml(c.name)}" placeholder="Ex: Creche Renascer"></div>
     <div class="field-row">
-      <div class="field"><label>CPF / CNPJ</label><input id="f_doc" value="${escapeHtml(c.doc)}"></div>
-      <div class="field"><label>Status</label>
+      <div class="field"><label for="f_doc">CPF / CNPJ</label><input id="f_doc" value="${escapeHtml(c.doc)}"></div>
+      <div class="field"><label for="f_status">Status</label>
         <select id="f_status"><option value="ativo" ${c.status==='ativo'?'selected':''}>Ativo</option><option value="inativo" ${c.status==='inativo'?'selected':''}>Inativo</option></select>
       </div>
     </div>
     <div class="field-row">
-      <div class="field"><label>Telefone</label><input id="f_phone" value="${escapeHtml(c.phone)}"></div>
-      <div class="field"><label>WhatsApp</label><input id="f_whatsapp" value="${escapeHtml(c.whatsapp)}"></div>
+      <div class="field"><label for="f_phone">Telefone</label><input id="f_phone" value="${escapeHtml(c.phone)}"></div>
+      <div class="field"><label for="f_whatsapp">WhatsApp</label><input id="f_whatsapp" value="${escapeHtml(c.whatsapp)}"></div>
     </div>
-    <div class="field"><label>Endereço</label><input id="f_address" value="${escapeHtml(c.address)}"></div>
+    <div class="field"><label for="f_address">Endereço</label><input id="f_address" value="${escapeHtml(c.address)}"></div>
     <div class="field-row">
-      <div class="field"><label>CEP</label><input id="f_cep" value="${escapeHtml(c.cep)}"></div>
-      <div class="field"><label>Cidade</label><input id="f_city" value="${escapeHtml(c.city)}"></div>
+      <div class="field"><label for="f_cep">CEP</label><input id="f_cep" value="${escapeHtml(c.cep)}"></div>
+      <div class="field"><label for="f_city">Cidade</label><input id="f_city" value="${escapeHtml(c.city)}"></div>
     </div>
-    <div class="field"><label>Observações</label><textarea id="f_notes">${escapeHtml(c.notes)}</textarea></div>
+    <div class="field"><label for="f_notes">Observações</label><textarea id="f_notes">${escapeHtml(c.notes)}</textarea></div>
   `;
   const foot = `
     <div>${editing ? `<button class="btn btn-danger btn-sm" onclick="deleteClient('${c.id}')">${ic('trash')} Excluir</button>` : '<span></span>'}</div>
@@ -1297,7 +1310,7 @@ function openOrderModal(id, presetClientId){
   const editing = id ? DB.orders.find(o=>o.id===id) : null;
   orderDraft = editing ? JSON.parse(JSON.stringify(editing)) : {
     id:null, clientId: presetClientId||'', date: todayISO(), description:'', type:'Cesta Básica',
-    saleValue:0, costs:[], payments:[], notes:'', overdue:false, receipts:[]
+    saleValue:0, costs:[], payments:[], notes:'', overdue:false
   };
   document.getElementById('modalRoot').innerHTML = orderModalHtml(editing);
 }
@@ -1306,28 +1319,28 @@ function orderModalHtml(editing){
   const clientOptions = DB.clients.map(c=> `<option value="${c.id}" ${o.clientId===c.id?'selected':''}>${escapeHtml(c.name)}</option>`).join('');
   const body = `
     <div class="field-row">
-      <div class="field"><label>Cliente *</label>
+      <div class="field"><label for="f_clientId">Cliente *</label>
         <select id="f_clientId">${clientOptions || '<option value="">Cadastre um cliente primeiro</option>'}</select>
       </div>
-      <div class="field"><label>Data *</label><input type="date" id="f_date" value="${o.date}"></div>
+      <div class="field"><label for="f_date">Data *</label><input type="date" id="f_date" value="${o.date}"></div>
     </div>
     <div class="field-row">
-      <div class="field"><label>Tipo</label>
+      <div class="field"><label for="f_type">Tipo</label>
         <select id="f_type">
           ${['Cesta Básica','Compra sob demanda','Outro serviço'].map(t=>`<option ${o.type===t?'selected':''}>${t}</option>`).join('')}
         </select>
       </div>
-      <div class="field"><label>Valor total cobrado do cliente (R$) *</label><input type="number" step="0.01" min="0" id="f_saleValue" value="${o.saleValue}" oninput="orderDraft.saleValue=parseFloat(this.value)||0; renderOrderTotals();"></div>
+      <div class="field"><label for="f_saleValue">Valor total cobrado do cliente (R$) *</label><input type="number" step="0.01" min="0" id="f_saleValue" value="${o.saleValue}" oninput="orderDraft.saleValue=Math.max(0,parseFloat(this.value)||0); renderOrderTotals();"></div>
     </div>
-    <div class="field"><label>Descrição</label><input id="f_description" value="${escapeHtml(o.description)}" placeholder="Ex: 10 Cestas Básicas P"></div>
+    <div class="field"><label for="f_description">Descrição</label><input id="f_description" value="${escapeHtml(o.description)}" placeholder="Ex: 10 Cestas Básicas P"></div>
 
     <div class="subblock">
       <div class="subblock-head"><div class="subblock-title">Custos do pedido</div></div>
       <div id="costRows">${renderCostRows()}</div>
       <div class="add-row-form">
-        <select class="f-cat" id="nc_cat">${DB.settings.costCategories.map(c=>`<option>${c}</option>`).join('')}</select>
-        <input class="f-desc" id="nc_desc" placeholder="Descrição (ex: comprovante 1)">
-        <input class="f-val" id="nc_val" type="number" step="0.01" placeholder="Valor">
+        <select class="f-cat" id="nc_cat" aria-label="Categoria do custo">${DB.settings.costCategories.map(c=>`<option>${c}</option>`).join('')}</select>
+        <input class="f-desc" id="nc_desc" placeholder="Descrição (ex: comprovante 1)" aria-label="Descrição do custo">
+        <input class="f-val" id="nc_val" type="number" step="0.01" placeholder="Valor" aria-label="Valor do custo">
         <label class="checkbox-row" style="font-size:11.5px; color:var(--text-dim);"><input type="checkbox" id="nc_receipt"> Tem comprovante</label>
         <button class="btn btn-ghost btn-sm" onclick="addCostRow()">${ic('plus')} Add</button>
       </div>
@@ -1338,18 +1351,18 @@ function orderModalHtml(editing){
       <div class="subblock-head"><div class="subblock-title">Pagamentos recebidos</div></div>
       <div id="paymentRows">${renderPaymentRows()}</div>
       <div class="add-row-form">
-        <input class="f-val" id="np_date" type="date" value="${todayISO()}" style="width:130px;">
-        <input class="f-val" id="np_val" type="number" step="0.01" placeholder="Valor" style="width:100px;">
-        <input class="f-desc" id="np_method" placeholder="Forma (PIX, dinheiro...)">
+        <input class="f-val" id="np_date" type="date" value="${todayISO()}" style="width:130px;" aria-label="Data do pagamento">
+        <input class="f-val" id="np_val" type="number" step="0.01" placeholder="Valor" style="width:100px;" aria-label="Valor do pagamento">
+        <input class="f-desc" id="np_method" placeholder="Forma (PIX, dinheiro...)" aria-label="Forma de pagamento">
         <button class="btn btn-ghost btn-sm" onclick="addPaymentRow()">${ic('plus')} Add</button>
       </div>
     </div>
 
     <div class="field checkbox-row" style="margin-bottom:14px;">
       <input type="checkbox" id="f_overdue" ${o.overdue?'checked':''} onchange="orderDraft.overdue=this.checked;">
-      <label style="margin:0; text-transform:none; font-size:12.5px;">Marcar como pagamento em atraso</label>
+      <label for="f_overdue" style="margin:0; text-transform:none; font-size:12.5px;">Marcar como pagamento em atraso</label>
     </div>
-    <div class="field"><label>Observações</label><textarea id="f_notes">${escapeHtml(o.notes)}</textarea></div>
+    <div class="field"><label for="f_notes">Observações</label><textarea id="f_notes">${escapeHtml(o.notes)}</textarea></div>
 
     <div id="orderTotalsBox"></div>
   `;
@@ -1366,7 +1379,7 @@ function renderCostRows(){
     <div class="mr-cat">${escapeHtml(c.category)}</div>
     <div class="mr-desc">${escapeHtml(c.description||'')} ${c.hasReceipt? '<span class="badge badge-green" style="margin-left:4px;">com nota</span>' : '<span class="badge badge-gray" style="margin-left:4px;">sem nota</span>'}</div>
     <div class="mr-val">${fmtBRL(c.value)}</div>
-    <button class="icon-btn mr-del" onclick="removeCostRow(${i})">${ic('trash')}</button>
+    <button class="icon-btn mr-del" onclick="removeCostRow(${i})" aria-label="Remover custo">${ic('trash')}</button>
   </div>`).join('');
 }
 function renderPaymentRows(){
@@ -1376,7 +1389,7 @@ function renderPaymentRows(){
     <div class="mr-cat">${fmtDate(p.date)}</div>
     <div class="mr-desc">${escapeHtml(p.method||'')}</div>
     <div class="mr-val" style="color:var(--green-400);">${fmtBRL(p.value)}</div>
-    <button class="icon-btn mr-del" onclick="removePaymentRow(${i})">${ic('trash')}</button>
+    <button class="icon-btn mr-del" onclick="removePaymentRow(${i})" aria-label="Remover pagamento">${ic('trash')}</button>
   </div>`).join('');
 }
 function addCostRow(){
@@ -1435,6 +1448,7 @@ function saveOrder(){
   const clientId = document.getElementById('f_clientId').value;
   if(!clientId){ toast('Selecione um cliente.'); return; }
   const saleValue = parseFloat(document.getElementById('f_saleValue').value)||0;
+  if(saleValue<=0){ toast('Informe o valor total cobrado do cliente.'); return; }
   const data = {
     clientId,
     date: document.getElementById('f_date').value || todayISO(),
@@ -1445,7 +1459,6 @@ function saveOrder(){
     costs: orderDraft.costs,
     payments: orderDraft.payments,
     overdue: orderDraft.overdue,
-    receipts: orderDraft.receipts||[],
   };
   if(orderDraft.id){
     const o = DB.orders.find(x=>x.id===orderDraft.id);
@@ -1465,22 +1478,22 @@ function openPurchaseModal(id){
   const clientOptions = `<option value="">Nenhum (compra geral)</option>` + DB.clients.map(c=> `<option value="${c.id}" ${p.clientId===c.id?'selected':''}>${escapeHtml(c.name)}</option>`).join('');
   const body = `
     <div class="field-row">
-      <div class="field"><label>Data *</label><input type="date" id="pf_date" value="${p.date}"></div>
-      <div class="field"><label>Fornecedor</label><input id="pf_supplier" value="${escapeHtml(p.supplier)}"></div>
+      <div class="field"><label for="pf_date">Data *</label><input type="date" id="pf_date" value="${p.date}"></div>
+      <div class="field"><label for="pf_supplier">Fornecedor</label><input id="pf_supplier" value="${escapeHtml(p.supplier)}"></div>
     </div>
-    <div class="field"><label>Cliente relacionado (opcional)</label><select id="pf_client">${clientOptions}</select></div>
-    <div class="field"><label>Descrição</label><input id="pf_desc" value="${escapeHtml(p.description)}" placeholder="Ex: Primeira parte das compras"></div>
-    <div class="field"><label>Produtos</label><textarea id="pf_products">${escapeHtml(p.products||'')}</textarea></div>
+    <div class="field"><label for="pf_client">Cliente relacionado (opcional)</label><select id="pf_client">${clientOptions}</select></div>
+    <div class="field"><label for="pf_desc">Descrição</label><input id="pf_desc" value="${escapeHtml(p.description)}" placeholder="Ex: Primeira parte das compras"></div>
+    <div class="field"><label for="pf_products">Produtos</label><textarea id="pf_products">${escapeHtml(p.products||'')}</textarea></div>
     <div class="field-row">
-      <div class="field"><label>Valor total (R$) *</label><input type="number" step="0.01" min="0" id="pf_total" value="${p.total}"></div>
-      <div class="field"><label>Forma de pagamento</label><input id="pf_method" value="${escapeHtml(p.paymentMethod||'')}"></div>
+      <div class="field"><label for="pf_total">Valor total (R$) *</label><input type="number" step="0.01" min="0" id="pf_total" value="${p.total}"></div>
+      <div class="field"><label for="pf_method">Forma de pagamento</label><input id="pf_method" value="${escapeHtml(p.paymentMethod||'')}"></div>
     </div>
     <div class="field checkbox-row">
       <input type="checkbox" id="pf_receipt" ${p.hasReceipt?'checked':''} onchange="document.getElementById('noReceiptNote').style.display=this.checked?'none':'block';">
-      <label style="margin:0; text-transform:none; font-size:12.5px;">Possui comprovante / nota fiscal</label>
+      <label for="pf_receipt" style="margin:0; text-transform:none; font-size:12.5px;">Possui comprovante / nota fiscal</label>
     </div>
     <div id="noReceiptNote" class="field-hint" style="display:${p.hasReceipt?'none':'block'}; margin-bottom:12px;">Será registrada como "Compra sem comprovante — já lançada". Isso não impede o cálculo do custo.</div>
-    <div class="field"><label>Observações</label><textarea id="pf_notes">${escapeHtml(p.notes||'')}</textarea></div>
+    <div class="field"><label for="pf_notes">Observações</label><textarea id="pf_notes">${escapeHtml(p.notes||'')}</textarea></div>
   `;
   const foot = `
     <div>${editing ? `<button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}'); closeModal();">${ic('trash')} Excluir</button>` : '<span></span>'}</div>
