@@ -22,6 +22,7 @@ Sistema de gestão financeira e operacional da **ABA Alimentos e Distribuição*
 | 📊 **Dashboard** | Receita, custos, lucro e margem em tempo real, com filtro por período |
 | 👥 **Clientes** | Cadastro completo com histórico individual de pedidos e lucro gerado |
 | 📦 **Pedidos / Serviços** | Cestas básicas e compras sob demanda, com cálculo automático de lucro |
+| 📅 **Ciclos mensais** | Clientes com valor fechado por mês: junta as compras do mês (parte 1, parte 2...), divide o pagamento entre elas e compara custo e lucro com o mês anterior |
 | 💰 **Custos** | Compras, frete, gasolina, entrega e outras categorias personalizáveis |
 | 🧾 **Comprovantes** | Suporte a compras sem nota, sem travar o cálculo do lucro |
 | 💳 **Pagamentos** | Controle de recebimento, inclusive parcelado |
@@ -41,9 +42,10 @@ Abra o arquivo `index.html` diretamente no navegador. Não precisa de servidor n
 ## 🗺️ Roadmap
 
 - [x] Dashboard, clientes, pedidos, compras, custos, pagamentos, comprovantes, calculadora
-- [ ] Controle de estoque
-- [ ] Cadastro de fornecedores
-- [ ] Cestas com composição de produtos e custo automático
+- [x] Controle de estoque
+- [x] Cadastro de fornecedores
+- [x] Cestas com composição de produtos e custo automático
+- [x] Ciclos mensais para clientes com valor fechado
 - [ ] Relatórios avançados e exportação
 - [ ] Lucro líquido (com despesas administrativas)
 
