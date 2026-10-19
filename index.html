@@ -265,6 +265,33 @@ tbody tr:last-child td{ border-bottom:none; }
 .checkbox-row{ display:flex; align-items:center; gap:8px; }
 .checkbox-row input{ width:auto; accent-color: var(--green-500); }
 
+/* ---------- Ciclos mensais ---------- */
+.cycle-card{ margin-bottom:16px; }
+.cycle-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+.cycle-title{ font-family: var(--font-display); font-weight:600; font-size:16px; color: var(--beige); }
+.cycle-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+.cycle-stats{ display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-bottom:14px; }
+.cycle-stat{ background: var(--bg-soft); border:1px solid var(--border-soft); border-radius:11px; padding:10px 12px; }
+.cycle-stat .v{ font-family: var(--font-mono); font-size:16px; font-weight:600; color: var(--beige); margin-top:4px; font-variant-numeric: tabular-nums; }
+.cycle-part{ display:grid; grid-template-columns: 70px 100px 1fr auto auto; gap:10px; align-items:center; padding:9px 4px; border-bottom:1px solid var(--border-soft); font-size:12.5px; cursor:pointer; border-radius:6px; }
+.cycle-part:last-child{ border-bottom:none; }
+.cycle-part:hover{ background: rgba(255,255,255,0.03); }
+.cycle-part.missing{ cursor:default; color: var(--text-faint); }
+.cycle-part.missing:hover{ background:none; }
+.cycle-part .num{ font-family: var(--font-mono); text-align:right; font-variant-numeric: tabular-nums; }
+.cycle-compare{ margin-top:12px; padding:10px 12px; border-radius:10px; background: rgba(233,226,207,0.05); border:1px dashed var(--border); font-size:12.5px; color: var(--text-dim); display:flex; gap:16px; flex-wrap:wrap; }
+.cycle-compare b{ font-family: var(--font-mono); font-weight:600; }
+.cycle-warn{ margin-top:10px; font-size:12px; color: var(--gold); display:flex; gap:6px; align-items:center; }
+.cycle-warn svg{ width:14px; height:14px; flex-shrink:0; }
+.attach-list{ max-height:220px; overflow:auto; border:1px solid var(--border-soft); border-radius:10px; padding:4px 10px; background: var(--bg-soft); }
+.attach-list label{ display:flex; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-soft); font-size:12.5px; text-transform:none; letter-spacing:0; color: var(--text); cursor:pointer; margin:0; font-weight:400; }
+.attach-list label:last-child{ border-bottom:none; }
+.attach-list input{ width:auto; accent-color: var(--green-500); }
+@media (max-width: 720px){
+  .cycle-stats{ grid-template-columns: repeat(2, 1fr); }
+  .cycle-part{ grid-template-columns: 56px 1fr auto; }
+  .cycle-part .hide-sm{ display:none; }
+}
 .subblock{ background: var(--bg-soft); border:1px solid var(--border-soft); border-radius:11px; padding:14px; margin-bottom:14px; }
 .subblock-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 .subblock-title{ font-size:12.5px; font-weight:700; color:var(--beige); }
@@ -356,6 +383,7 @@ const ICONS = {
   truck: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
   users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',
   box: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 8-9-5-9 5 9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="10" x2="12" y2="22"/></svg>',
   inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z"/></svg>',
 };
 function ic(name, cls){ return ICONS[name] ? ICONS[name].replace('<svg ', `<svg class="${cls||''}" `) : ''; }
@@ -438,6 +466,7 @@ function seedData(){
       }
     ],
     purchases: [],
+    cycles: [],
     settings: { costCategories: defaultCostCategories() }
   };
 }
@@ -449,6 +478,7 @@ function loadDB(){
     const parsed = JSON.parse(raw);
     if(!parsed.settings) parsed.settings = { costCategories: defaultCostCategories() };
     if(!parsed.purchases) parsed.purchases = [];
+    if(!parsed.cycles) parsed.cycles = [];
     return parsed;
   }catch(e){
     console.error('Erro ao carregar dados, recriando base.', e);
@@ -521,6 +551,40 @@ function periodTotals(orders){
 
 function clientName(id){ const c = DB.clients.find(x=>x.id===id); return c ? c.name : 'Cliente removido'; }
 
+/* ---------- Ciclos mensais (cliente paga um valor mensal, compras lançadas em partes) ---------- */
+function cycleOrders(cycle){
+  return DB.orders.filter(o=> o.cycleId===cycle.id)
+    .sort((a,b)=> (a.cyclePart||9)-(b.cyclePart||9) || a.date.localeCompare(b.date));
+}
+function cycleRefDate(cycle){
+  const ds = cycleOrders(cycle).map(o=>o.date).sort();
+  return ds[0] || cycle.createdAt || '';
+}
+function cycleTotals(cycle){
+  const orders = cycleOrders(cycle);
+  const t = periodTotals(orders);
+  const paid = orders.reduce((s,o)=> s + orderPaid(o), 0);
+  const monthly = Number(cycle.monthlyValue)||0;
+  return { ...t, orders, paid, monthly, balance: Math.max(0, t.revenue - paid) };
+}
+function cyclesOfClient(clientId){
+  return DB.cycles.filter(c=> c.clientId===clientId).sort((a,b)=> cycleRefDate(a).localeCompare(cycleRefDate(b)));
+}
+function previousCycle(cycle){
+  const list = cyclesOfClient(cycle.clientId);
+  const i = list.findIndex(c=> c.id===cycle.id);
+  return i>0 ? list[i-1] : null;
+}
+function cycleStatus(t){
+  if(t.orders.length===0 || t.revenue<=0) return 'Sem partes';
+  if(t.paid<=0) return 'Não pago';
+  if(t.balance>0.005) return 'Parcial';
+  return 'Pago';
+}
+function cycleLabel(id){ const c = DB.cycles.find(x=>x.id===id); return c ? c.name : ''; }
+const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+function defaultCycleName(){ const d = new Date(); return MONTHS_PT[d.getMonth()] + '/' + d.getFullYear(); }
+
 /* ---------- Estado ---------- */
 const state = {
   view: 'dashboard',
@@ -531,6 +595,7 @@ const state = {
   searchClients: '',
   searchOrders: '',
   searchPurchases: '',
+  cycleClientFilter: '',
   sidebarOpen: false,
 };
 
@@ -561,6 +626,7 @@ const NAV_ITEMS = [
   {id:'dashboard', label:'Dashboard', icon:'dashboard'},
   {id:'clients', label:'Clientes', icon:'clients'},
   {id:'orders', label:'Pedidos / Serviços', icon:'orders'},
+  {id:'cycles', label:'Ciclos mensais', icon:'calendar'},
   {id:'purchases', label:'Compras', icon:'purchases'},
   {id:'calculator', label:'Calculadora', icon:'calc'},
   {id:'settings', label:'Configurações', icon:'settings'},
@@ -591,6 +657,7 @@ function appShell(){
       <div class="nav-label">Operação</div>
       ${navBtn('clients')}
       ${navBtn('orders')}
+      ${navBtn('cycles')}
       ${navBtn('purchases')}
       <div class="nav-label">Ferramentas</div>
       ${navBtn('calculator')}
@@ -622,6 +689,7 @@ function render(){
   else if(state.view==='clients') root.innerHTML = renderClients();
   else if(state.view==='client-detail') root.innerHTML = renderClientDetail();
   else if(state.view==='orders') root.innerHTML = renderOrders();
+  else if(state.view==='cycles') root.innerHTML = renderCycles();
   else if(state.view==='purchases') root.innerHTML = renderPurchases();
   else if(state.view==='calculator') root.innerHTML = renderCalculator();
   else if(state.view==='settings') root.innerHTML = renderSettings();
@@ -955,6 +1023,7 @@ function renderClientDetail(){
         <div class="page-sub">${escapeHtml(c.city||'Cidade não informada')} · <span class="tag-status status-${c.status}">${c.status==='ativo'?'Ativo':'Inativo'}</span></div>
       </div>
       <button class="btn btn-ghost btn-sm" onclick="openClientModal('${c.id}')">${ic('edit')} Editar</button>
+      ${cyclesOfClient(c.id).length ? `<button class="btn btn-ghost btn-sm" onclick="state.cycleClientFilter='${c.id}'; navigateTo('cycles')">${ic('calendar')} Ciclos mensais</button>` : ''}
       <button class="btn btn-primary btn-sm" onclick="openOrderModal(null,'${c.id}')">${ic('plus')} Novo pedido</button>
     </div>
 
@@ -1042,7 +1111,7 @@ function renderOrders(){
       <th>Cliente</th><th>Data</th><th>Tipo</th><th>Pagamento</th><th class="td-num">Receita</th><th class="td-num">Custo</th><th class="td-num">Lucro</th><th class="td-num">Margem</th><th></th>
     </tr></thead><tbody>
       ${list.map(o=> `<tr onclick="openOrderModal('${o.id}')">
-        <td><div class="client-row-name">${escapeHtml(clientName(o.clientId))}</div><div class="client-row-sub">${escapeHtml(o.description||'')}</div></td>
+        <td><div class="client-row-name">${escapeHtml(clientName(o.clientId))}</div><div class="client-row-sub">${o.cycleId && cycleLabel(o.cycleId) ? `<span class="badge badge-gold" style="margin-right:6px;">${escapeHtml(cycleLabel(o.cycleId))} · parte ${o.cyclePart||'?'}</span>` : ''}${escapeHtml(o.description||'')}</div></td>
         <td>${fmtDate(o.date)}</td>
         <td><span class="badge badge-gray">${escapeHtml(o.type||'—')}</span></td>
         <td>${statusBadge(orderPaymentStatus(o))}</td>
@@ -1336,7 +1405,7 @@ function orderModalHtml(editing){
   const body = `
     <div class="field-row">
       <div class="field"><label for="f_clientId">Cliente *</label>
-        <select id="f_clientId">${clientOptions || '<option value="">Cadastre um cliente primeiro</option>'}</select>
+        <select id="f_clientId" onchange="refreshOrderModal()">${clientOptions || '<option value="">Cadastre um cliente primeiro</option>'}</select>
       </div>
       <div class="field"><label for="f_date">Data *</label><input type="date" id="f_date" value="${o.date}"></div>
     </div>
@@ -1349,6 +1418,7 @@ function orderModalHtml(editing){
       <div class="field"><label for="f_saleValue">Valor total cobrado do cliente (R$) *</label><input type="number" step="0.01" min="0" id="f_saleValue" value="${o.saleValue}" oninput="orderDraft.saleValue=Math.max(0,parseFloat(this.value)||0); renderOrderTotals();"></div>
     </div>
     <div class="field"><label for="f_description">Descrição</label><input id="f_description" value="${escapeHtml(o.description)}" placeholder="Ex: 10 Cestas Básicas P"></div>
+    ${orderCycleFields(o)}
 
     <div class="subblock">
       <div class="subblock-head"><div class="subblock-title">Custos do pedido</div></div>
@@ -1443,6 +1513,9 @@ function refreshOrderModal(){
   if(cur.type) orderDraft.type = cur.type;
   if(cur.description!==undefined) orderDraft.description = cur.description;
   if(cur.notes!==undefined) orderDraft.notes = cur.notes;
+  const cyc = document.getElementById('f_cycleId');
+  if(cyc){ orderDraft.cycleId = cyc.value || null; orderDraft.cyclePart = parseInt(document.getElementById('f_cyclePart')?.value)||null; }
+  if(orderDraft.cycleId && !DB.cycles.some(c=> c.id===orderDraft.cycleId && c.clientId===orderDraft.clientId)){ orderDraft.cycleId = null; orderDraft.cyclePart = null; }
   document.getElementById('modalRoot').innerHTML = orderModalHtml(!!orderDraft.id);
   renderOrderTotals();
 }
@@ -1465,7 +1538,15 @@ function saveOrder(){
   if(!clientId){ toast('Selecione um cliente.'); return; }
   const saleValue = parseFloat(document.getElementById('f_saleValue').value)||0;
   if(saleValue<=0){ toast('Informe o valor total cobrado do cliente.'); return; }
+  const cycleSel = document.getElementById('f_cycleId');
+  const cycleId = cycleSel ? (cycleSel.value || null) : null;
+  const cyclePart = cycleId ? (parseInt(document.getElementById('f_cyclePart').value)||null) : null;
+  if(cycleId){
+    const clash = DB.orders.find(x=> x.cycleId===cycleId && x.cyclePart===cyclePart && x.id!==orderDraft.id);
+    if(clash && !confirm(`O ciclo ${cycleLabel(cycleId)} já tem uma parte ${cyclePart} (lançada em ${fmtDate(clash.date)}). Salvar mesmo assim?`)) return;
+  }
   const data = {
+    cycleId, cyclePart,
     clientId,
     date: document.getElementById('f_date').value || todayISO(),
     type: document.getElementById('f_type').value,
