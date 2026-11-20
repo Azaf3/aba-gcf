@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <style>
 :root{
   --bg: #0d1712;
@@ -268,36 +269,6 @@ tbody tr:last-child td{ border-bottom:none; }
 .checkbox-row{ display:flex; align-items:center; gap:8px; }
 .checkbox-row input{ width:auto; accent-color: var(--green-500); }
 
-/* ---------- Ciclos mensais ---------- */
-.cycle-card{ margin-bottom:16px; overflow:visible; }
-.cycle-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
-.cycle-title{ font-family: var(--font-display); font-weight:600; font-size:16px; color: var(--beige); display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-.cycle-actions{ display:flex; gap:8px; flex-wrap:wrap; }
-.cycle-stats{ display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-bottom:14px; }
-.cycle-stat{ background: var(--bg-soft); border:1px solid var(--border-soft); border-radius:11px; padding:10px 12px; }
-.cycle-stat .v{ font-family: var(--font-mono); font-size:16px; font-weight:600; color: var(--beige); margin-top:4px; font-variant-numeric: tabular-nums; }
-.cycle-part{ display:grid; grid-template-columns: 64px 92px 1fr 110px 110px; gap:10px; align-items:center; padding:10px 6px; border-bottom:1px solid var(--border-soft); font-size:12.5px; cursor:pointer; border-radius:6px; transition: background .15s; }
-.cycle-part:last-child{ border-bottom:none; }
-.cycle-part:hover{ background: rgba(255,255,255,0.03); }
-.cycle-part.missing{ cursor:default; color: var(--text-faint); }
-.cycle-part.missing:hover{ background:none; }
-.cycle-part.missing > div:last-child{ grid-column: span 2; text-align:right; }
-.cycle-part .num{ font-family: var(--font-mono); text-align:right; font-variant-numeric: tabular-nums; }
-.cycle-compare{ margin-top:12px; padding:10px 12px; border-radius:10px; background: rgba(233,226,207,0.05); border:1px dashed var(--border); font-size:12.5px; color: var(--text-dim); display:flex; gap:8px 18px; flex-wrap:wrap; align-items:baseline; }
-.cycle-compare b{ font-family: var(--font-mono); font-weight:600; }
-.cycle-warn{ margin-top:10px; font-size:12px; color: var(--gold); display:flex; gap:6px; align-items:center; }
-.cycle-warn svg{ width:14px; height:14px; flex-shrink:0; }
-.attach-list{ max-height:220px; overflow:auto; border:1px solid var(--border-soft); border-radius:10px; padding:2px 12px; background: var(--bg-soft); }
-.attach-list label{ display:flex; gap:10px; align-items:center; padding:9px 0; border-bottom:1px solid var(--border-soft); font-size:12.5px; text-transform:none; letter-spacing:0; color: var(--text); cursor:pointer; margin:0; font-weight:400; }
-.attach-list label:last-child{ border-bottom:none; }
-.attach-list input{ width:auto; accent-color: var(--green-500); }
-@media (max-width: 720px){
-  .cycle-stats{ grid-template-columns: repeat(2, 1fr); }
-  .cycle-part{ grid-template-columns: 52px 1fr 92px 92px; }
-  .cycle-part .hide-sm{ display:none; }
-  .cycle-part.missing{ grid-template-columns: 52px 1fr auto; }
-  .cycle-part.missing > div:last-child{ grid-column:auto; }
-}
 .subblock{ background: var(--bg-soft); border:1px solid var(--border-soft); border-radius:11px; padding:14px; margin-bottom:14px; }
 .subblock-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 .subblock-title{ font-size:12.5px; font-weight:700; color:var(--beige); }
@@ -364,6 +335,59 @@ button:focus-visible, .chip:focus-visible, a:focus-visible, select:focus-visible
 .inline-link:hover{ color: var(--beige); }
 .hidden-file{ display:none; }
 
+/* ---------- Recibo (papel claro, marca ABA) ---------- */
+#receiptRoot{ display:none; position:fixed; inset:0; z-index:150; overflow-y:auto; background: rgba(6,10,8,0.85); backdrop-filter: blur(3px); padding: 0 16px 40px; }
+#receiptRoot.open{ display:block; }
+.rc-notice{ max-width:760px; margin:0 auto 12px; background: rgba(211,168,76,0.12); border:1px solid rgba(211,168,76,0.4); color: var(--beige); border-radius:9px; padding:10px 14px; font-size:12.5px; }
+.rc-input{ width:100%; font:inherit; color: var(--ink); background:#fff; border:1px solid var(--line); border-radius:6px; padding:5px 7px; }
+.rc-input:focus{ outline:2px solid var(--accent); outline-offset:0; border-color: var(--accent); }
+.rc-toolbar{ position:sticky; top:0; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:14px 0; max-width:760px; margin:0 auto; z-index:2; }
+.rc-paper{ --ink:#1b2a21; --ink-soft:#5c6b61; --line:#e2dccb; --paper:#fffdf7; --accent:#2d6a4f; --beige-p:#f3eedf;
+  background: var(--paper); color: var(--ink); max-width:760px; margin:0 auto; border-radius:12px; padding:40px 44px; font-family: var(--font-body); font-size:13.5px; line-height:1.5; box-shadow: 0 30px 70px -20px rgba(0,0,0,0.7); }
+.rc-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; padding-bottom:22px; border-bottom:3px solid var(--accent); }
+.rc-brand{ display:flex; gap:12px; align-items:center; }
+.rc-mark{ width:44px; height:44px; border-radius:11px; background: var(--accent); color:#f3eedf; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:800; font-size:20px; flex-shrink:0; }
+.rc-biz{ font-family:var(--font-display); font-weight:700; font-size:17px; color: var(--ink); }
+.rc-biz-sub{ font-size:11.5px; color: var(--ink-soft); }
+.rc-id{ text-align:right; }
+.rc-title{ font-family:var(--font-display); font-weight:700; font-size:15px; color: var(--accent); text-transform:uppercase; letter-spacing:.8px; }
+.rc-num{ font-family:var(--font-mono); font-size:12px; color: var(--ink-soft); margin-top:2px; }
+.rc-client{ background: var(--beige-p); border-radius:9px; padding:14px 16px; margin:22px 0; }
+.rc-label{ font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color: var(--ink-soft); }
+.rc-client-name{ font-family:var(--font-display); font-weight:600; font-size:15.5px; margin-top:2px; }
+.rc-muted{ color: var(--ink-soft); font-size:12px; }
+.rc-table{ width:100%; min-width:0; border-collapse:collapse; font-size:13px; }
+.rc-table thead th{ background:none; color: var(--ink-soft); border-bottom:1.5px solid var(--ink); padding:8px 6px; font-size:10.5px; letter-spacing:1px; }
+.rc-table tbody tr, .rc-table tbody tr:hover{ background:none; cursor:default; }
+.rc-table tbody td{ color: var(--ink); border-bottom:1px solid var(--line); padding:10px 6px; }
+.rc-num-col{ text-align:right !important; font-family:var(--font-mono); white-space:nowrap; }
+.rc-totals{ margin:18px 0 0 auto; max-width:340px; }
+.rc-line{ display:flex; justify-content:space-between; gap:16px; padding:5px 0; font-family:var(--font-mono); font-size:13px; }
+.rc-line span:first-child{ font-family:var(--font-body); }
+.rc-grand{ border-top:1.5px solid var(--ink); margin-top:6px; padding-top:10px; font-size:17px; color: var(--accent); }
+.rc-grand span:first-child{ font-family:var(--font-display); font-weight:700; text-transform:uppercase; font-size:13px; letter-spacing:.6px; align-self:center; }
+.rc-pix{ margin-top:26px; border:1.5px dashed var(--accent); border-radius:9px; padding:12px 16px; }
+.rc-pix-key{ font-family:var(--font-mono); font-size:15px; font-weight:600; margin-top:2px; word-break:break-all; }
+.rc-text{ margin-top:22px; }
+.rc-foot{ margin-top:40px; display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center; }
+.rc-sign{ width:280px; font-size:12px; color: var(--ink-soft); }
+.rc-sign-line{ border-top:1px solid var(--ink); margin-bottom:6px; }
+@media (max-width: 600px){
+  .rc-paper{ padding:24px 18px; }
+  .rc-id{ text-align:left; }
+  .rc-table{ font-size:12px; }
+  .rc-table thead th, .rc-table tbody td{ padding:8px 4px; }
+}
+@media print{
+  @page{ size:A4; margin:14mm; }
+  body.rc-printing{ background:#fff !important; }
+  body.rc-printing > *:not(#receiptRoot){ display:none !important; }
+  body.rc-printing #receiptRoot{ position:static; display:block; background:none; padding:0; overflow:visible; backdrop-filter:none; }
+  .no-print{ display:none !important; }
+  .rc-paper{ box-shadow:none; border-radius:0; max-width:none; padding:0; }
+  .rc-paper *{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
 .mobile-topbar{ display:none; }
 @media (max-width: 880px){
   .sidebar{ position:fixed; left:-260px; transition:left .2s ease; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
@@ -381,16 +405,46 @@ button:focus-visible, .chip:focus-visible, a:focus-visible, select:focus-visible
   .modal-body{ max-height: none; }
   .detail-header{ flex-wrap:wrap; }
 }
+
+/* ---------- Login, carregamento e sincronização ---------- */
+.auth-wrap{ min-height:100vh; min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:24px 16px; width:100%; }
+.auth-card{ width:100%; max-width:400px; }
+.auth-card .brand{ padding:0 0 18px; }
+.auth-title{ font-family:var(--font-display); font-weight:700; font-size:19px; color:var(--beige); margin-bottom:6px; }
+.auth-sub{ color:var(--text-dim); font-size:13px; margin-bottom:18px; line-height:1.5; }
+.auth-card .btn{ width:100%; justify-content:center; }
+.auth-err{ background:rgba(193,102,107,0.12); border:1px solid var(--red-dim); color:#f0c3c5; border-radius:9px; padding:10px 12px; font-size:12.5px; margin-bottom:14px; line-height:1.45; }
+.auth-ok{ background:rgba(64,145,108,0.12); border:1px solid var(--green-700); color:var(--beige); border-radius:9px; padding:10px 12px; font-size:12.5px; margin-bottom:14px; line-height:1.45; }
+.auth-link{ background:none; border:none; color:var(--green-400); font-size:12.5px; margin-top:14px; padding:4px; text-decoration:underline; text-underline-offset:3px; }
+.auth-choices{ display:flex; flex-direction:column; gap:10px; }
+.auth-choices .hint{ font-size:11.5px; color:var(--text-faint); margin:-4px 0 4px; text-align:center; }
+.spinner{ width:26px; height:26px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--green-400); animation: spin .8s linear infinite; margin:0 auto 14px; }
+@keyframes spin{ to{ transform:rotate(360deg);} }
+.btn:focus-visible, .auth-link:focus-visible, .nav-item:focus-visible{ outline:2px solid var(--green-400); outline-offset:2px; }
+.btn[disabled]{ opacity:.6; cursor:wait; }
+.sync{ display:flex; align-items:center; gap:7px; font-size:11.5px; color:var(--text-dim); margin-bottom:8px; }
+.sync .dot{ width:8px; height:8px; border-radius:50%; background:var(--green-400); flex-shrink:0; }
+.sync[data-st="saving"] .dot{ background:var(--gold); animation: pulse 1s ease infinite; }
+.sync[data-st="offline"] .dot, .sync[data-st="error"] .dot{ background:var(--red); }
+@keyframes pulse{ 50%{ opacity:.35; } }
+.user-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:11.5px; color:var(--text-faint); margin-bottom:8px; }
+.user-row span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.user-row button{ background:none; border:1px solid var(--border); color:var(--text-dim); border-radius:7px; padding:3px 8px; font-size:11px; flex-shrink:0; }
+.user-row button:hover{ color:var(--text); border-color:var(--green-500); }
+.mobile-topbar .sync{ margin:0 0 0 auto; }
+@media (prefers-reduced-motion: reduce){ .spinner, .sync .dot{ animation:none; } }
 </style>
 </head>
 <body>
 <div id="app" class="app"></div>
 <div id="modalRoot"></div>
+<div id="receiptRoot"></div>
 <div id="toastRoot"></div>
+<div id="syncRoot"></div>
 <script id="app-data-marker" type="application/json"></script>
 <script>
 /* ============================================================
-   ABA GESTÃO · Controle Financeiro — app único (localStorage)
+   ABA GESTÃO · Controle Financeiro — app único, dados na nuvem (Supabase)
    ============================================================ */
 
 /* ---------- Ícones (SVG inline, minimalistas) ---------- */
@@ -415,7 +469,6 @@ const ICONS = {
   truck: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
   users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',
   box: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 8-9-5-9 5 9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>',
-  calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="10" x2="12" y2="22"/></svg>',
   inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z"/></svg>',
   basket: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11h14l-1.5 9a1 1 0 0 1-1 .8h-9a1 1 0 0 1-1-.8Z"/><path d="M3 11h18"/><path d="m8 11 3-7"/><path d="m16 11-3-7"/><line x1="10" y1="15" x2="10" y2="17"/><line x1="14" y1="15" x2="14" y2="17"/></svg>',
   swap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>',
@@ -500,23 +553,23 @@ function seedData(){
     ],
     purchases: [],
     expenses: [],
-    cycles: [],
     settings: { costCategories: defaultCostCategories(), expenseCategories: defaultExpenseCategories() }
   };
 }
 
 function emptyDB(){
-  return { clients:[], orders:[], purchases:[], expenses:[], products:[], stockMoves:[], suppliers:[], baskets:[], cycles:[], settings:{}, schemaVersion: SCHEMA_VERSION };
+  return { clients:[], orders:[], purchases:[], expenses:[], products:[], stockMoves:[], suppliers:[], baskets:[], settings:{}, schemaVersion: SCHEMA_VERSION };
 }
 
 // Completa campos que versões anteriores não tinham. Nunca remove nada.
 function migrateDB(db){
   if(!db || typeof db !== 'object' || Array.isArray(db)) db = emptyDB();
-  ['clients','orders','purchases','expenses','products','stockMoves','baskets','cycles'].forEach(k=>{ if(!Array.isArray(db[k])) db[k] = []; });
+  ['clients','orders','purchases','expenses','products','stockMoves','baskets'].forEach(k=>{ if(!Array.isArray(db[k])) db[k] = []; });
   if(!db.settings || typeof db.settings !== 'object') db.settings = {};
   if(!Array.isArray(db.settings.costCategories)) db.settings.costCategories = defaultCostCategories();
   if(!Array.isArray(db.settings.expenseCategories)) db.settings.expenseCategories = defaultExpenseCategories();
   if(!Array.isArray(db.settings.productCategories)) db.settings.productCategories = defaultProductCategories();
+  if(!Array.isArray(db.receipts)) db.receipts = [];
   db.orders.forEach(o=>{ if(!Array.isArray(o.costs)) o.costs = []; if(!Array.isArray(o.payments)) o.payments = []; if(!Array.isArray(o.baskets)) o.baskets = []; });
   db.purchases.forEach(p=>{ if(!Array.isArray(p.items)) p.items = []; });
   if(!Array.isArray(db.suppliers)){
@@ -538,46 +591,427 @@ function newSupplierRecord(name, date){
   return { id: uid(), name, doc:'', phone:'', contact:'', city:'', notes:'', createdAt: date || todayISO() };
 }
 
-function writeStorage(db){
-  localStorage.setItem(DB_KEY, JSON.stringify(db));
+/* ---------- Nuvem (Supabase) ----------
+   Os dados de cada usuário ficam numa linha da tabela aba_dados (coluna dados, jsonb).
+   O navegador guarda uma cópia local (cache) para abrir rápido e para não perder
+   nada se a internet cair: o que for salvo sem conexão sobe quando ela voltar.
+   A coluna versao evita que um aparelho sobrescreva sem querer o que outro salvou. */
+const SUPABASE_URL = 'https://leietuxwxnufawupvzrm.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_r7hSygYetxzXdP_o81Qs1w_lG-GCTBW'; // chave pública (publishable): pode ficar no site
+const CLOUD_TABLE = 'aba_dados';
+const HISTORY_TABLE = 'aba_historico';
+const ACCESS_TABLE = 'aba_usuarios'; // o projeto Supabase é dividido com outro site: só quem está nesta lista usa o ABA
+
+let DB = migrateDB(emptyDB());
+let sb = null;
+let currentUser = null;
+const sync = { version:0, rev:0, dirty:false, saving:false, timer:null, retry:null, status:'saved', conflict:false };
+
+function cloudConfigured(){
+  return /^https:\/\/.+\.supabase\.co\/?$/.test(SUPABASE_URL) && (/^sb_publishable_/.test(SUPABASE_ANON_KEY) || SUPABASE_ANON_KEY.length > 40);
+}
+function cacheKey(){ return 'abaGestaoOnline_cache_' + (currentUser ? currentUser.id : 'anon'); }
+function writeCache(){
+  try{ localStorage.setItem(cacheKey(), JSON.stringify({ db:DB, version:sync.version, dirty:sync.dirty, at:Date.now() })); }
+  catch(e){ console.warn('Cache local indisponível', e); }
+}
+function readCache(){
+  try{
+    const c = JSON.parse(localStorage.getItem(cacheKey()) || 'null');
+    return c && c.db && typeof c.db === 'object' ? c : null;
+  }catch(e){ return null; }
+}
+function clearCache(){ try{ localStorage.removeItem(cacheKey()); }catch(_){} }
+
+// Chamado por todas as telas depois de alterar DB. Grava a cópia local na hora e envia para a nuvem logo em seguida.
+function saveDB(){
+  if(!currentUser){ toast('Sua sessão terminou. Entre de novo para salvar.', 'error'); return false; }
+  sync.rev++;
+  sync.dirty = true;
+  writeCache();
+  scheduleSync(600);
+  return true;
+}
+function scheduleSync(delay){
+  clearTimeout(sync.timer);
+  sync.timer = setTimeout(pushToCloud, delay);
+}
+function setSyncStatus(st){
+  sync.status = st;
+  document.querySelectorAll('.sync').forEach(el=>{ el.outerHTML = syncBadgeHtml(); });
+}
+function syncBadgeHtml(){
+  const labels = { saved:'Salvo na nuvem', saving:'Salvando…', offline:'Sem internet, salvo neste aparelho', error:'Erro ao salvar, tentando de novo', conflict:'Precisa da sua escolha' };
+  const st = sync.status;
+  return `<div class="sync" data-st="${st==='conflict'?'error':st}" role="status" title="${labels[st]||''}"><span class="dot"></span><span class="sync-label">${labels[st]||''}</span></div>`;
+}
+function cloudErrorMessage(err){
+  const m = String((err && (err.message || err.error_description)) || err || '');
+  if(!navigator.onLine || /fetch|network|Failed to/i.test(m)) return 'Sem conexão com a internet.';
+  if(/Invalid login credentials/i.test(m)) return 'E-mail ou senha incorretos.';
+  if(/Email not confirmed/i.test(m)) return 'Este e-mail ainda não foi confirmado.';
+  if(/rate limit|too many/i.test(m)) return 'Muitas tentativas seguidas. Espere alguns minutos e tente de novo.';
+  if(/JWT|token/i.test(m)) return 'Sua sessão expirou. Entre de novo.';
+  if(/relation .* does not exist|Could not find the table/i.test(m)) return 'O banco ainda não foi preparado (tabela aba_dados não encontrada). Rode o script supabase.sql no Supabase.';
+  if(/row-level security|42501|permission denied/i.test(m)) return 'Esta conta não tem permissão para usar o ABA Gestão.';
+  if(/should be different/i.test(m)) return 'A nova senha precisa ser diferente da atual.';
+  if(/Password should be/i.test(m)) return 'A senha precisa ter pelo menos 6 caracteres.';
+  return m || 'Erro desconhecido.';
 }
 
-function loadDB(){
-  let raw = null;
-  try{ raw = localStorage.getItem(DB_KEY); }
-  catch(e){
-    loadWarning = 'Este navegador está bloqueando o armazenamento local (modo anônimo ou dados de site bloqueados). O que você cadastrar agora não ficará salvo.';
-    return migrateDB(seedData());
-  }
-  if(!raw){
-    const seed = migrateDB(seedData());
-    try{ writeStorage(seed); }catch(e){ loadWarning = 'Não foi possível salvar no navegador.'; }
-    return seed;
-  }
+async function pushToCloud(){
+  if(sync.saving || !sync.dirty || sync.conflict || !currentUser) return;
+  if(!navigator.onLine){ setSyncStatus('offline'); return; }
+  sync.saving = true;
+  setSyncStatus('saving');
+  const sentRev = sync.rev;
+  const snapshot = JSON.parse(JSON.stringify(DB));
   try{
-    const parsed = JSON.parse(raw);
-    if(!parsed || typeof parsed !== 'object') throw new Error('formato inválido');
-    return migrateDB(parsed);
+    let res, conflict = false, newVersion;
+    if(sync.version === 0){
+      res = await sb.from(CLOUD_TABLE).insert({ user_id: currentUser.id, dados: snapshot, versao: 1 }).select('versao');
+      if(res.error && res.error.code === '23505') conflict = true;
+    }else{
+      res = await sb.from(CLOUD_TABLE).update({ dados: snapshot, versao: sync.version + 1 })
+        .eq('user_id', currentUser.id).eq('versao', sync.version).select('versao');
+      if(!res.error && (!res.data || !res.data.length)) conflict = true;
+    }
+    if(conflict){ sync.saving = false; return handleConflict(); }
+    if(res.error) throw res.error;
+    newVersion = res.data[0].versao;
+    sync.version = newVersion;
+    if(sync.rev === sentRev) sync.dirty = false;
+    writeCache();
+    clearTimeout(sync.retry);
+    setSyncStatus(sync.dirty ? 'saving' : 'saved');
+    if(sync.dirty) scheduleSync(300);
   }catch(e){
-    // Não sobrescreve o que estava salvo sem guardar uma cópia antes.
-    console.error('Erro ao carregar dados.', e);
-    const backupKey = DB_KEY + '_ilegivel_' + Date.now();
-    try{ localStorage.setItem(backupKey, raw); }catch(_){}
-    loadWarning = 'Os dados salvos estavam ilegíveis. Uma cópia foi guardada no navegador ("' + backupKey + '") e o sistema começou vazio. Se tiver um backup .json, importe em Configurações.';
-    const fresh = migrateDB(emptyDB());
-    try{ writeStorage(fresh); }catch(_){}
-    return fresh;
+    console.error('Falha ao salvar na nuvem', e);
+    setSyncStatus(navigator.onLine ? 'error' : 'offline');
+    if(/JWT|token/i.test(String(e && e.message))){ toast('Sua sessão expirou. Entre de novo; o que você fez está guardado neste aparelho.', 'error'); }
+    clearTimeout(sync.retry);
+    sync.retry = setTimeout(pushToCloud, 15000);
+  }finally{
+    sync.saving = false;
   }
 }
-function saveDB(){
-  try{ writeStorage(DB); return true; }
-  catch(e){
-    console.error(e);
-    toast('Não foi possível salvar: o armazenamento do navegador está cheio ou bloqueado. Exporte um backup agora.', 'error');
-    return false;
+
+// Outro aparelho salvou depois da última vez que este aparelho baixou os dados.
+function handleConflict(){
+  sync.conflict = true;
+  setSyncStatus('conflict');
+  document.getElementById('syncRoot').innerHTML = `<div class="modal-overlay open" id="conflictOverlay">
+    <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="conflictTitle" style="max-width:520px">
+      <div class="modal-head"><div class="modal-title" id="conflictTitle">Os dados foram alterados em outro aparelho</div></div>
+      <div class="modal-body">
+        <p style="font-size:13.5px; line-height:1.55; color:var(--text-dim)">Enquanto este aparelho estava aberto, outro aparelho salvou mudanças. Escolha qual versão fica valendo.</p>
+        <p style="font-size:12.5px; line-height:1.55; color:var(--text-faint); margin-top:10px">Antes de trocar, a versão deste aparelho é baixada como arquivo .json, para nada se perder.</p>
+      </div>
+      <div class="modal-foot" style="flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="resolveConflict('local')">Manter a deste aparelho</button>
+        <button class="btn btn-primary" onclick="resolveConflict('cloud')">Usar a da nuvem (recomendado)</button>
+      </div>
+    </div></div>`;
+}
+async function resolveConflict(choice){
+  document.querySelectorAll('#conflictOverlay .btn').forEach(b=> b.disabled = true);
+  exportData('aba-gestao-este-aparelho-');
+  try{
+    const res = await sb.from(CLOUD_TABLE).select('dados,versao').eq('user_id', currentUser.id).maybeSingle();
+    if(res.error) throw res.error;
+    if(choice === 'cloud'){
+      if(!res.data) throw new Error('Nenhum dado encontrado na nuvem.');
+      DB = migrateDB(res.data.dados);
+      sync.version = res.data.versao; sync.dirty = false;
+      writeCache(); closeModal(); render();
+      toast('Dados atualizados com a versão da nuvem.');
+      setSyncStatus('saved');
+    }else{
+      sync.version = res.data ? res.data.versao : 0;
+      sync.dirty = true; sync.rev++;
+      writeCache();
+    }
+    sync.conflict = false;
+    document.getElementById('syncRoot').innerHTML = '';
+    if(choice === 'local') pushToCloud();
+  }catch(e){
+    document.querySelectorAll('#conflictOverlay .btn').forEach(b=> b.disabled = false);
+    toast('Não foi possível concluir: ' + cloudErrorMessage(e), 'error');
   }
 }
-let DB = loadDB();
+
+// Ao voltar para a aba (ou para o app no celular), busca o que outro aparelho tenha salvo.
+async function refreshFromCloud(){
+  if(!currentUser || sync.dirty || sync.saving || sync.conflict || !navigator.onLine) return;
+  if(document.getElementById('modalOverlay')) return; // não troca os dados com um formulário aberto
+  try{
+    const head = await sb.from(CLOUD_TABLE).select('versao').eq('user_id', currentUser.id).maybeSingle();
+    if(head.error || !head.data || head.data.versao <= sync.version) return;
+    const res = await sb.from(CLOUD_TABLE).select('dados,versao').eq('user_id', currentUser.id).single();
+    if(res.error || sync.dirty || document.getElementById('modalOverlay')) return;
+    DB = migrateDB(res.data.dados);
+    sync.version = res.data.versao;
+    writeCache(); render();
+    toast('Dados atualizados com o que foi salvo em outro aparelho.');
+  }catch(e){ console.warn('Não foi possível atualizar', e); }
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible') refreshFromCloud(); });
+window.addEventListener('online', ()=>{ if(sync.dirty) pushToCloud(); else refreshFromCloud(); });
+window.addEventListener('offline', ()=>{ if(currentUser) setSyncStatus(sync.dirty ? 'offline' : sync.status); });
+window.addEventListener('beforeunload', e=>{
+  if(sync.dirty){ e.preventDefault(); e.returnValue = ''; }
+});
+
+/* ---------- Telas antes do sistema (login, carregando, primeira vez) ---------- */
+function brandHtml(){
+  return `<div class="brand"><div class="brand-mark">A</div><div class="brand-text"><div class="t1">ABA Gestão</div><div class="t2">Controle Financeiro</div></div></div>`;
+}
+function screen(inner){
+  document.getElementById('app').innerHTML = `<div class="auth-wrap"><div class="card auth-card">${brandHtml()}${inner}</div></div>`;
+}
+function renderLoading(msg){
+  screen(`<div style="text-align:center; padding:20px 0 6px"><div class="spinner" aria-hidden="true"></div><div class="auth-sub" style="margin:0">${escapeHtml(msg)}</div></div>`);
+}
+function renderBootError(msg){
+  screen(`<div class="auth-title">Não foi possível abrir</div><div class="auth-err">${escapeHtml(msg)}</div>
+    <button class="btn btn-primary" onclick="location.reload()">Tentar de novo</button>`);
+}
+function renderAuth(mode, msg, ok){
+  const note = msg ? `<div class="${ok?'auth-ok':'auth-err'}" role="${ok?'status':'alert'}">${escapeHtml(msg)}</div>` : '';
+  if(mode === 'recovery'){
+    screen(`<div class="auth-title">Criar nova senha</div><div class="auth-sub">Escolha uma senha com pelo menos 6 caracteres.</div>${note}
+      <form onsubmit="event.preventDefault(); doNewPassword(this)" novalidate>
+        <div class="field"><label for="np1">Nova senha</label><input id="np1" type="password" autocomplete="new-password" required minlength="6"></div>
+        <div class="field"><label for="np2">Repita a nova senha</label><input id="np2" type="password" autocomplete="new-password" required minlength="6"></div>
+        <button class="btn btn-primary" type="submit">Salvar senha e entrar</button>
+      </form>`);
+    return;
+  }
+  if(mode === 'forgot'){
+    screen(`<div class="auth-title">Esqueci minha senha</div><div class="auth-sub">Enviamos um link para o seu e-mail. Abra o link neste aparelho para criar uma senha nova.</div>${note}
+      <form onsubmit="event.preventDefault(); doForgot(this)" novalidate>
+        <div class="field"><label for="fe">E-mail</label><input id="fe" type="email" autocomplete="email" required></div>
+        <button class="btn btn-primary" type="submit">Enviar link</button>
+      </form>
+      <div style="text-align:center"><button class="auth-link" onclick="renderAuth('login')">Voltar para o login</button></div>`);
+    return;
+  }
+  screen(`<div class="auth-title">Entrar</div><div class="auth-sub">Use o e-mail e a senha da sua conta.</div>${note}
+    <form onsubmit="event.preventDefault(); doLogin(this)" novalidate>
+      <div class="field"><label for="le">E-mail</label><input id="le" type="email" autocomplete="email" required></div>
+      <div class="field"><label for="lp">Senha</label><input id="lp" type="password" autocomplete="current-password" required></div>
+      <button class="btn btn-primary" type="submit">Entrar</button>
+    </form>
+    <div style="text-align:center"><button class="auth-link" onclick="renderAuth('forgot')">Esqueci minha senha</button></div>`);
+  setTimeout(()=>{ const el = document.getElementById('le'); if(el) el.focus(); }, 0);
+}
+function setBusy(form, busy, label){
+  const b = form.querySelector('button[type=submit]');
+  if(!b) return;
+  if(busy){ b.dataset.label = b.textContent; b.textContent = label; b.disabled = true; }
+  else{ b.textContent = b.dataset.label || b.textContent; b.disabled = false; }
+}
+function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v); }
+async function doLogin(form){
+  const email = form.querySelector('#le').value.trim();
+  const pass = form.querySelector('#lp').value;
+  if(!validEmail(email)) return renderAuthKeep('login', 'Digite um e-mail válido, como nome@exemplo.com.', email);
+  if(!pass) return renderAuthKeep('login', 'Digite a senha.', email);
+  setBusy(form, true, 'Entrando…');
+  try{
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if(error) throw error;
+    startSession(data.user);
+  }catch(e){
+    renderAuthKeep('login', cloudErrorMessage(e), email);
+  }
+}
+function renderAuthKeep(mode, msg, email){
+  renderAuth(mode, msg);
+  const el = document.getElementById(mode === 'forgot' ? 'fe' : 'le');
+  if(el){ el.value = email || ''; const p = document.getElementById('lp'); (email && p ? p : el).focus(); }
+}
+async function doForgot(form){
+  const email = form.querySelector('#fe').value.trim();
+  if(!validEmail(email)) return renderAuthKeep('forgot', 'Digite um e-mail válido, como nome@exemplo.com.', email);
+  setBusy(form, true, 'Enviando…');
+  try{
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+    if(error) throw error;
+    renderAuth('login', 'Se esse e-mail tiver conta, o link chega em alguns minutos. Confira também a caixa de spam.', true);
+  }catch(e){ renderAuthKeep('forgot', cloudErrorMessage(e), email); }
+}
+async function doNewPassword(form){
+  const a = form.querySelector('#np1').value, b = form.querySelector('#np2').value;
+  if(a.length < 6) return renderAuth('recovery', 'A senha precisa ter pelo menos 6 caracteres.');
+  if(a !== b) return renderAuth('recovery', 'As duas senhas não são iguais.');
+  setBusy(form, true, 'Salvando…');
+  try{
+    const { data, error } = await sb.auth.updateUser({ password: a });
+    if(error) throw error;
+    history.replaceState(null, '', location.pathname);
+    toast('Senha alterada.');
+    startSession(data.user);
+  }catch(e){ renderAuth('recovery', cloudErrorMessage(e)); }
+}
+
+function legacyLocalData(){
+  try{
+    const raw = localStorage.getItem(DB_KEY);
+    if(!raw) return null;
+    const d = JSON.parse(raw);
+    return d && Array.isArray(d.clients) && Array.isArray(d.orders) ? d : null;
+  }catch(e){ return null; }
+}
+function renderFirstRun(msg){
+  const legacy = legacyLocalData();
+  const legacyBtn = legacy ? `<button class="btn btn-ghost" onclick="firstRunUse('legacy')">Trazer os dados deste navegador</button>
+    <div class="hint">${legacy.clients.length} cliente(s) e ${legacy.orders.length} pedido(s) encontrados aqui.</div>` : '';
+  screen(`<div class="auth-title">Bem-vindo</div>
+    <div class="auth-sub">Sua conta ainda está vazia. Para trazer tudo o que você já tem, importe o backup (.json) exportado na versão anterior, em Configurações → Exportar backup.</div>
+    ${msg ? `<div class="auth-err" role="alert">${escapeHtml(msg)}</div>` : ''}
+    <div class="auth-choices">
+      <button class="btn btn-primary" onclick="document.getElementById('firstFile').click()">${ic('upload')} Importar backup (.json)</button>
+      <input type="file" id="firstFile" class="hidden-file" accept=".json,application/json" onchange="firstRunFile(this)">
+      ${legacyBtn}
+      <button class="btn btn-ghost" onclick="firstRunUse('empty')">Começar do zero</button>
+    </div>
+    <div style="text-align:center"><button class="auth-link" onclick="logout()">Sair</button></div>`);
+}
+function firstRunFile(input){
+  const file = input.files && input.files[0];
+  input.value = '';
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onerror = ()=> renderFirstRun('Não foi possível ler o arquivo.');
+  reader.onload = ()=>{
+    let data;
+    try{ data = JSON.parse(reader.result); }catch(e){ return renderFirstRun('Esse arquivo não é um JSON legível.'); }
+    if(!data || !Array.isArray(data.clients) || !Array.isArray(data.orders)) return renderFirstRun('Esse arquivo não é um backup completo do ABA Gestão. Exporte em Configurações → Exportar backup na versão anterior.');
+    firstRunUse('data', data);
+  };
+  reader.readAsText(file);
+}
+function firstRunUse(kind, data){
+  if(kind === 'empty' && !confirm('Começar com o sistema vazio? Dá para importar um backup depois em Configurações.')) return;
+  DB = migrateDB(kind === 'data' ? data : kind === 'legacy' ? legacyLocalData() : emptyDB());
+  sync.version = 0;
+  saveDB();
+  render();
+  scheduleSync(0);
+  if(kind !== 'empty') toast(`Importado: ${DB.clients.length} cliente(s) e ${DB.orders.length} pedido(s). Enviando para a nuvem…`);
+}
+
+async function startSession(user){
+  currentUser = user;
+  sync.conflict = false; sync.dirty = false; sync.version = 0;
+  renderLoading('Carregando seus dados…');
+  const cache = readCache();
+  let remote;
+  try{
+    const acc = await sb.from(ACCESS_TABLE).select('user_id').eq('user_id', user.id).maybeSingle();
+    if(acc.error) throw acc.error;
+    if(!acc.data) return denyAccess(user.email);
+    const res = await sb.from(CLOUD_TABLE).select('dados,versao').eq('user_id', user.id).maybeSingle();
+    if(res.error) throw res.error;
+    remote = res.data;
+  }catch(e){
+    if(cache){
+      DB = migrateDB(cache.db); sync.version = cache.version || 0; sync.dirty = !!cache.dirty;
+      render(); setSyncStatus('offline');
+      toast('Sem conexão com a nuvem: mostrando a última cópia deste aparelho. O que você salvar sobe quando a conexão voltar.', 'error');
+      sync.retry = setTimeout(pushToCloud, 15000);
+      return;
+    }
+    return renderBootError(cloudErrorMessage(e));
+  }
+  // Mudanças feitas sem internet que ainda não subiram têm prioridade (a versão evita sobrescrever outro aparelho)
+  if(cache && cache.dirty){
+    DB = migrateDB(cache.db); sync.version = cache.version || 0; sync.dirty = true;
+    render(); scheduleSync(0);
+    return;
+  }
+  if(!remote) return renderFirstRun();
+  DB = migrateDB(remote.dados);
+  sync.version = remote.versao;
+  writeCache();
+  setSyncStatus('saved');
+  render();
+}
+
+// O login é dividido com outro site do mesmo projeto Supabase: ter conta lá não dá acesso ao ABA.
+async function denyAccess(email){
+  try{ await sb.auth.signOut(); }catch(_){}
+  currentUser = null;
+  DB = migrateDB(emptyDB());
+  renderAuth('login', 'A conta ' + (email || '') + ' não tem acesso ao ABA Gestão. Entre com a conta liberada para o sistema.');
+}
+async function logout(){
+  if(sync.dirty && !confirm('Ainda há alterações que não subiram para a nuvem. Se sair agora, elas ficam só neste aparelho até você entrar de novo. Sair mesmo assim?')) return;
+  if(!sync.dirty) clearCache();
+  try{ await sb.auth.signOut(); }catch(_){}
+  currentUser = null;
+  DB = migrateDB(emptyDB());
+  closeModal();
+  renderAuth('login');
+}
+
+async function boot(){
+  if(!cloudConfigured()) return renderBootError('Falta configurar a conexão com o Supabase: preencha SUPABASE_URL e SUPABASE_ANON_KEY no início do código.');
+  if(!window.supabase || !window.supabase.createClient) return renderBootError('Não foi possível carregar o sistema. Verifique a internet e tente de novo.');
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, storageKey:'aba-gestao-auth' } });
+  let recovering = /type=recovery/.test(location.hash);
+  sb.auth.onAuthStateChange((event)=>{
+    if(event === 'PASSWORD_RECOVERY'){ recovering = true; renderAuth('recovery'); }
+  });
+  renderLoading('Abrindo…');
+  try{
+    const { data, error } = await sb.auth.getSession();
+    if(error) throw error;
+    if(recovering) return renderAuth('recovery');
+    if(data.session) startSession(data.session.user);
+    else renderAuth('login');
+  }catch(e){
+    renderAuth('login', cloudErrorMessage(e));
+  }
+}
+
+/* ---------- Versões anteriores (cópias automáticas guardadas no banco) ---------- */
+async function openHistory(){
+  document.getElementById('modalRoot').innerHTML = modalShell('Versões anteriores', `<div style="text-align:center; padding:20px"><div class="spinner"></div></div>`, `<span></span><button class="btn btn-ghost" onclick="closeModal()">Fechar</button>`);
+  let rows;
+  try{
+    const res = await sb.from(HISTORY_TABLE).select('id,versao,salvo_em').eq('user_id', currentUser.id).order('salvo_em', { ascending:false }).limit(100);
+    if(res.error) throw res.error;
+    rows = res.data;
+  }catch(e){
+    const body = document.querySelector('#modalOverlay .modal-body');
+    if(body) body.innerHTML = `<div class="auth-err">${escapeHtml(cloudErrorMessage(e))}</div>`;
+    return;
+  }
+  const body = document.querySelector('#modalOverlay .modal-body');
+  if(!body) return;
+  body.innerHTML = `<div class="field-hint" style="margin:0 0 12px">Cópias guardadas automaticamente (no máximo uma a cada 10 minutos). Baixe a versão que quiser e use Configurações → Importar para voltar a ela.</div>` +
+    (rows.length ? rows.map(r=> `<div class="mini-row"><div class="mr-desc">${new Date(r.salvo_em).toLocaleString('pt-BR')}</div><button class="btn btn-ghost btn-sm" onclick="downloadVersion(${r.id}, this)">Baixar .json</button></div>`).join('')
+      : `<div class="empty-state" style="padding:24px 10px"><h4>Nenhuma cópia ainda</h4><p>A primeira aparece depois que os dados forem alterados.</p></div>`);
+}
+async function downloadVersion(id, btn){
+  btn.disabled = true;
+  try{
+    const res = await sb.from(HISTORY_TABLE).select('dados,salvo_em').eq('id', id).single();
+    if(res.error) throw res.error;
+    downloadJSON(res.data.dados, 'aba-gestao-versao-' + isoLocal(new Date(res.data.salvo_em)) + '.json');
+  }catch(e){ toast('Não foi possível baixar: ' + cloudErrorMessage(e), 'error'); }
+  btn.disabled = false;
+}
+function downloadJSON(obj, name){
+  const blob = new Blob([JSON.stringify(obj,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=> URL.revokeObjectURL(url), 1000);
+}
 
 /* ---------- Utilitários ---------- */
 function uid(){ return 'id_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
@@ -650,39 +1084,6 @@ function periodTotals(orders){
 
 function clientName(id){ const c = DB.clients.find(x=>x.id===id); return c ? c.name : 'Cliente removido'; }
 
-/* ---------- Ciclos mensais (valor fechado por mês, compras lançadas em partes) ---------- */
-function cycleOrders(cycle){
-  return DB.orders.filter(o=> o.cycleId===cycle.id)
-    .sort((a,b)=> (a.cyclePart||99)-(b.cyclePart||99) || a.date.localeCompare(b.date));
-}
-function cycleRefDate(cycle){
-  const ds = cycleOrders(cycle).map(o=>o.date).sort();
-  return ds[0] || cycle.createdAt || '';
-}
-function cycleTotals(cycle){
-  const orders = cycleOrders(cycle);
-  const t = periodTotals(orders);
-  const paid = orders.reduce((s,o)=> s + orderPaid(o), 0);
-  return { ...t, orders, paid, monthly: Number(cycle.monthlyValue)||0, balance: Math.max(0, round2(t.revenue - paid)) };
-}
-function cyclesOfClient(clientId){
-  return DB.cycles.filter(c=> c.clientId===clientId).sort((a,b)=> cycleRefDate(a).localeCompare(cycleRefDate(b)));
-}
-function previousCycle(cycle){
-  const list = cyclesOfClient(cycle.clientId);
-  const i = list.findIndex(c=> c.id===cycle.id);
-  return i>0 ? list[i-1] : null;
-}
-function cycleStatus(t){
-  if(t.orders.length===0 || t.revenue<=0) return 'Sem partes';
-  if(t.paid<=0.005) return 'Não pago';
-  if(t.balance>0.005) return 'Parcial';
-  return 'Pago';
-}
-function cycleLabel(id){ const c = DB.cycles.find(x=>x.id===id); return c ? c.name : ''; }
-const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-function defaultCycleName(){ const d = new Date(); return MONTHS_PT[d.getMonth()] + '/' + d.getFullYear(); }
-
 /* ---------- Estoque, fornecedores e cestas ---------- */
 function productById(id){ return DB.products.find(p=>p.id===id); }
 function productName(id){ const p = productById(id); return p ? p.name : 'Produto removido'; }
@@ -737,7 +1138,6 @@ const state = {
   searchProducts: '',
   searchSuppliers: '',
   stockOnlyLow: false,
-  cycleClientFilter: '',
   sidebarOpen: false,
 };
 
@@ -768,7 +1168,7 @@ const NAV_ITEMS = [
   {id:'dashboard', label:'Dashboard', icon:'dashboard'},
   {id:'clients', label:'Clientes', icon:'clients'},
   {id:'orders', label:'Pedidos / Serviços', icon:'orders'},
-  {id:'cycles', label:'Ciclos mensais', icon:'calendar'},
+  {id:'receivables', label:'A receber', icon:'clock'},
   {id:'purchases', label:'Compras', icon:'purchases'},
   {id:'expenses', label:'Despesas', icon:'expenses'},
   {id:'stock', label:'Estoque', icon:'box'},
@@ -803,7 +1203,7 @@ function appShell(){
       <div class="nav-label">Operação</div>
       ${navBtn('clients')}
       ${navBtn('orders')}
-      ${navBtn('cycles')}
+      ${navBtn('receivables')}
       ${navBtn('purchases')}
       ${navBtn('expenses')}
       <div class="nav-label">Produtos</div>
@@ -815,6 +1215,8 @@ function appShell(){
       ${navBtn('settings')}
     </nav>
     <div class="sidebar-foot">
+      ${syncBadgeHtml()}
+      <div class="user-row"><span title="${escapeHtml(currentUser ? currentUser.email : '')}">${escapeHtml(currentUser ? currentUser.email : '')}</span><button onclick="logout()">Sair</button></div>
       <div class="biz">ABA Alimentos e Distribuição<br>Gama · Brasília/DF</div>
     </div>
   </aside>
@@ -822,6 +1224,7 @@ function appShell(){
     <div class="mobile-topbar">
       <button aria-label="Abrir menu" onclick="state.sidebarOpen=true; render();">${ic('menu')}</button>
       <div class="brand-text"><div class="t1" style="font-size:14px">ABA Gestão</div></div>
+      ${syncBadgeHtml()}
     </div>
     <div id="viewRoot"></div>
   </main>`;
@@ -844,7 +1247,6 @@ function render(){
   else if(state.view==='clients') root.innerHTML = renderClients();
   else if(state.view==='client-detail') root.innerHTML = renderClientDetail();
   else if(state.view==='orders') root.innerHTML = renderOrders();
-  else if(state.view==='cycles') root.innerHTML = renderCycles();
   else if(state.view==='purchases') root.innerHTML = renderPurchases();
   else if(state.view==='expenses') root.innerHTML = renderExpenses();
   else if(state.view==='calculator') root.innerHTML = renderCalculator();
@@ -852,6 +1254,7 @@ function render(){
   else if(state.view==='stock') root.innerHTML = renderStock();
   else if(state.view==='baskets') root.innerHTML = renderBaskets();
   else if(state.view==='suppliers') root.innerHTML = renderSuppliers();
+  else if(state.view==='receivables') root.innerHTML = renderReceivables();
   afterRender();
   if(focusId){
     const el = document.getElementById(focusId);
@@ -1019,7 +1422,7 @@ function renderAlerts(lowMargin, pending, overdue, lowStock){
   const items = [];
   if(lowStock && lowStock.length) items.push(['gold','box', `<b>${lowStock.length} produto(s)</b> abaixo do estoque mínimo: ${lowStock.slice(0,3).map(p=>escapeHtml(p.name)).join(', ')}${lowStock.length>3?'...':''}. <button class="inline-link" onclick="state.stockOnlyLow=true; navigateTo('stock')">Ver estoque</button>`]);
   if(overdue.length) items.push(['red','alert', `<b>${overdue.length} pedido(s) em atraso</b> com saldo pendente de recebimento.`]);
-  if(pending.length) items.push(['gold','clock', `<b>${pending.length} pedido(s)</b> com valores ainda não recebidos, totalizando ${fmtBRL(pending.reduce((s,o)=>s+Math.max(0,orderBalance(o)),0))}.`]);
+  if(pending.length) items.push(['gold','clock', `<b>${pending.length} pedido(s)</b> com valores ainda não recebidos, totalizando ${fmtBRL(pending.reduce((s,o)=>s+Math.max(0,orderBalance(o)),0))}. <button class="inline-link" onclick="navigateTo('receivables')">Ver a receber</button>`]);
   if(lowMargin.length) items.push(['red','alert', `<b>${lowMargin.length} pedido(s)</b> com margem de lucro abaixo de 15%.`]);
   if(items.length===0) return emptyState('check','Tudo em ordem', 'Nenhum alerta financeiro no período selecionado.');
   return items.map(([tone,icon,text])=> `<div class="alert-item">
@@ -1194,7 +1597,7 @@ function renderClientDetail(){
         <div class="page-sub">${escapeHtml(c.city||'Cidade não informada')} · <span class="tag-status status-${c.status}">${c.status==='ativo'?'Ativo':'Inativo'}</span></div>
       </div>
       <button class="btn btn-ghost btn-sm" onclick="openClientModal('${c.id}')">${ic('edit')} Editar</button>
-      ${cyclesOfClient(c.id).length ? `<button class="btn btn-ghost btn-sm" onclick="state.cycleClientFilter='${c.id}'; navigateTo('cycles')">${ic('calendar')} Ciclos mensais</button>` : ''}
+      ${orders.length ? `<button class="btn btn-ghost btn-sm" onclick="openReceiptPicker('${c.id}')">${ic('receipt')} Gerar recibo</button>` : ''}
       <button class="btn btn-primary btn-sm" onclick="openOrderModal(null,'${c.id}')">${ic('plus')} Novo pedido</button>
     </div>
 
@@ -1282,7 +1685,7 @@ function renderOrders(){
       <th>Cliente</th><th>Data</th><th>Tipo</th><th>Pagamento</th><th class="td-num">Receita</th><th class="td-num">Custo</th><th class="td-num">Lucro</th><th class="td-num">Margem</th><th></th>
     </tr></thead><tbody>
       ${list.map(o=> `<tr onclick="openOrderModal('${o.id}')">
-        <td><div class="client-row-name">${escapeHtml(clientName(o.clientId))}</div><div class="client-row-sub">${o.cycleId && cycleLabel(o.cycleId) ? `<span class="badge badge-gold" style="margin-right:6px;">${escapeHtml(cycleLabel(o.cycleId))} · parte ${o.cyclePart||'?'}</span>` : ''}${escapeHtml(o.description||'')}</div></td>
+        <td><div class="client-row-name">${escapeHtml(clientName(o.clientId))}</div><div class="client-row-sub">${escapeHtml(o.description||'')}</div></td>
         <td>${fmtDate(o.date)}</td>
         <td><span class="badge badge-gray">${escapeHtml(o.type||'—')}</span></td>
         <td>${statusBadge(orderPaymentStatus(o))}</td>
@@ -1290,7 +1693,7 @@ function renderOrders(){
         <td class="td-num">${fmtBRL(orderTotalCost(o))}</td>
         <td class="td-num" style="color:${orderGrossProfit(o)>=0?'#7fe0ab':'#f0aeb1'}">${fmtBRL(orderGrossProfit(o))}</td>
         <td class="td-num">${marginBadge(orderMargin(o))}</td>
-        <td class="td-actions"><button class="icon-btn" onclick="event.stopPropagation(); deleteOrder('${o.id}')">${ic('trash')}</button></td>
+        <td class="td-actions"><div style="display:inline-flex; gap:6px;"><button class="icon-btn" aria-label="Gerar recibo" title="Gerar recibo" onclick="event.stopPropagation(); openReceiptPicker('${o.clientId}','${o.id}')">${ic('receipt')}</button><button class="icon-btn" aria-label="Excluir pedido" title="Excluir" onclick="event.stopPropagation(); deleteOrder('${o.id}')">${ic('trash')}</button></div></td>
       </tr>`).join('')}
     </tbody></table></div>`}
   `;
@@ -1304,301 +1707,6 @@ function deleteOrder(id){
   setMovesForRef('order', id, []);
   saveDB(); render(); toast('Pedido excluído.');
   return true;
-}
-
-/* ============================================================
-   CICLOS MENSAIS
-   Cliente paga um valor fechado por mês; as compras do mês são
-   lançadas como pedidos separados (parte 1, parte 2...) na data
-   em que foram feitas. O ciclo junta as partes e compara meses.
-   ============================================================ */
-function renderCycles(){
-  const clientsWithCycles = DB.clients.filter(c=> DB.cycles.some(cy=> cy.clientId===c.id));
-  if(state.cycleClientFilter && !clientsWithCycles.some(c=> c.id===state.cycleClientFilter)) state.cycleClientFilter = '';
-  const list = DB.cycles
-    .filter(cy=> !state.cycleClientFilter || cy.clientId===state.cycleClientFilter)
-    .sort((a,b)=> cycleRefDate(b).localeCompare(cycleRefDate(a)));
-  const chips = clientsWithCycles.length > 1 ? `<div class="period-bar" style="margin-bottom:16px;">
-      <button class="chip ${!state.cycleClientFilter?'active':''}" onclick="state.cycleClientFilter=''; render();">Todos</button>
-      ${clientsWithCycles.map(c=> `<button class="chip ${state.cycleClientFilter===c.id?'active':''}" onclick="state.cycleClientFilter='${c.id}'; render();">${escapeHtml(c.name)}</button>`).join('')}
-    </div>` : '';
-  return `
-    <div class="topbar">
-      <div>
-        <div class="page-title">Ciclos mensais</div>
-        <div class="page-sub">Clientes com valor fechado por mês e compras lançadas em partes</div>
-      </div>
-      <button class="btn btn-primary" onclick="openCycleModal()">${ic('plus')} Novo ciclo</button>
-    </div>
-    ${chips}
-    ${list.length===0 ? `<div class="card">${emptyState('calendar','Nenhum ciclo cadastrado','Crie um ciclo para o cliente que paga um valor por mês. Cada compra continua sendo lançada como um pedido, na data em que foi feita, e o ciclo soma tudo.', "openCycleModal()", "Novo ciclo")}</div>`
-      : list.map(renderCycleCard).join('')}
-  `;
-}
-
-function renderCycleCard(cy){
-  const t = cycleTotals(cy);
-  const parts = Math.max(1, parseInt(cy.parts)||2);
-  const status = cycleStatus(t);
-  const dates = t.orders.map(o=>o.date).sort();
-  const span = dates.length ? (dates.length>1 && dates[0]!==dates[dates.length-1] ? `${fmtDate(dates[0])} a ${fmtDate(dates[dates.length-1])}` : fmtDate(dates[0])) : 'Nenhuma parte lançada ainda';
-
-  const rows = [];
-  for(let n=1; n<=parts; n++){
-    const ords = t.orders.filter(o=> o.cyclePart===n);
-    if(ords.length===0){
-      rows.push(`<div class="cycle-part missing">
-        <div><b>Parte ${n}</b></div>
-        <div class="hide-sm">—</div>
-        <div>Ainda não lançada</div>
-        <div><button class="btn btn-ghost btn-sm" onclick="openOrderModal(null,'${cy.clientId}','${cy.id}',${n})">${ic('plus')} Lançar</button></div>
-      </div>`);
-    } else ords.forEach(o=> rows.push(cyclePartRow(o, `Parte ${n}`)));
-  }
-  // partes fora da numeração (ex: parte 3 num ciclo de 2) não podem sumir da conta
-  t.orders.filter(o=> !(o.cyclePart>=1 && o.cyclePart<=parts)).forEach(o=> rows.push(cyclePartRow(o, 'Extra')));
-
-  const prev = previousCycle(cy);
-  let compare = `<div class="cycle-compare">Primeiro ciclo registrado deste cliente. A comparação aparece a partir do próximo.</div>`;
-  if(prev){
-    let pt = cycleTotals(prev);
-    // ciclo atual incompleto: compara só as mesmas partes do ciclo anterior, senão o lucro parece cair
-    const launched = [...new Set(t.orders.map(o=> o.cyclePart))];
-    const partial = t.orders.length > 0 && launched.length < parts;
-    if(partial) pt = periodTotals(cycleOrders(prev).filter(o=> launched.includes(o.cyclePart)));
-    const dCost = t.cost - pt.cost, dProfit = t.profit - pt.profit;
-    const costTxt = Math.abs(dCost) < 0.005 ? 'igual' : (dCost < 0 ? `<b style="color:#7fe0ab">${fmtBRL(-dCost)} a menos</b>` : `<b style="color:#f0aeb1">${fmtBRL(dCost)} a mais</b>`);
-    const profitTxt = Math.abs(dProfit) < 0.005 ? 'igual' : (dProfit > 0 ? `<b style="color:#7fe0ab">+ ${fmtBRL(dProfit)}</b>` : `<b style="color:#f0aeb1">− ${fmtBRL(-dProfit)}</b>`);
-    const who = partial ? `${launched.length===1 ? 'a parte '+launched[0] : 'as partes '+launched.sort().join(' e ')} de` : '';
-    compare = t.orders.length===0 ? `<div class="cycle-compare">Lance a primeira parte para comparar com ${escapeHtml(prev.name)}.</div>` : `<div class="cycle-compare">
-      <span>Comparado ${partial?'com '+who:'a'} <b style="color:var(--beige)">${escapeHtml(prev.name)}</b>:</span>
-      <span>Custo ${costTxt} <span class="client-row-sub">(${fmtBRL(pt.cost)} → ${fmtBRL(t.cost)})</span></span>
-      <span>Lucro ${profitTxt}</span>
-      <span>Margem ${fmtPct(pt.margin)} → ${fmtPct(t.margin)}</span>
-    </div>`;
-  }
-
-  const diff = round2(t.revenue - t.monthly);
-  const warn = (t.monthly > 0 && t.orders.length >= parts && Math.abs(diff) > 0.005)
-    ? `<div class="cycle-warn">${ic('alert')} As partes somam ${fmtBRL(t.revenue)}, ${diff>0?'acima':'abaixo'} do valor do mês (${fmtBRL(t.monthly)}). Confira o valor cobrado em cada parte.</div>` : '';
-
-  return `<div class="card cycle-card">
-    <div class="cycle-head">
-      <div>
-        <div class="cycle-title">${escapeHtml(cy.name)} ${statusBadge(status==='Sem partes'?'Não pago':status)}</div>
-        <div class="client-row-sub" style="font-size:12.5px;">${escapeHtml(clientName(cy.clientId))} · ${span}</div>
-      </div>
-      <div class="cycle-actions">
-        ${t.balance > 0.005 ? `<button class="btn btn-ghost btn-sm" onclick="openCyclePaymentModal('${cy.id}')">${ic('check')} Registrar pagamento</button>` : ''}
-        <button class="btn btn-ghost btn-sm" onclick="openCycleModal('${cy.id}')">${ic('edit')} Editar</button>
-      </div>
-    </div>
-    <div class="cycle-stats">
-      <div class="cycle-stat"><div class="stat-label">Valor do mês</div><div class="v">${fmtBRL(t.monthly)}</div></div>
-      <div class="cycle-stat"><div class="stat-label">Custo do ciclo</div><div class="v">${fmtBRL(t.cost)}</div></div>
-      <div class="cycle-stat"><div class="stat-label">Lucro</div><div class="v" style="color:${t.profit>=0?'#7fe0ab':'#f0aeb1'}">${fmtBRL(t.profit)}</div><div class="client-row-sub">Margem ${fmtPct(t.margin)}</div></div>
-      <div class="cycle-stat"><div class="stat-label">A receber</div><div class="v" style="color:${t.balance>0.005?'var(--gold)':'var(--text)'}">${fmtBRL(t.balance)}</div><div class="client-row-sub">${fmtBRL(t.paid)} recebido</div></div>
-    </div>
-    <div>${rows.join('')}</div>
-    ${warn}
-    ${compare}
-    ${cy.notes ? `<div class="field-hint" style="margin-top:10px;">${escapeHtml(cy.notes)}</div>` : ''}
-  </div>`;
-}
-
-function cyclePartRow(o, label){
-  return `<div class="cycle-part" onclick="openOrderModal('${o.id}')" title="Abrir pedido">
-    <div><b>${label}</b></div>
-    <div class="hide-sm">${fmtDate(o.date)}</div>
-    <div style="min-width:0;"><span class="hide-sm">${escapeHtml(o.description||o.type||'')}</span><span class="client-row-sub" style="display:block;">${statusBadge(orderPaymentStatus(o))}</span></div>
-    <div class="num">${fmtBRL(orderTotalCost(o))}<div class="client-row-sub">custo</div></div>
-    <div class="num">${fmtBRL(o.saleValue)}<div class="client-row-sub">cobrado</div></div>
-  </div>`;
-}
-
-/* ---------- Modal: ciclo ---------- */
-let cycleDraft = null;
-
-function openCycleModal(id){
-  const editing = id ? DB.cycles.find(c=> c.id===id) : null;
-  if(editing){
-    cycleDraft = { ...editing, attach: cycleOrders(editing).map(o=>o.id) };
-  } else {
-    const clientId = state.cycleClientFilter || (DB.clients.find(c=> c.name.toLowerCase().includes('creche'))||DB.clients[0]||{}).id || '';
-    cycleDraft = { id:null, clientId, name: defaultCycleName(), monthlyValue: lastMonthlyValue(clientId), parts:2, notes:'', attach:[] };
-  }
-  document.getElementById('modalRoot').innerHTML = cycleModalHtml();
-}
-function lastMonthlyValue(clientId){
-  const list = cyclesOfClient(clientId);
-  return list.length ? Number(list[list.length-1].monthlyValue)||0 : 0;
-}
-function cycleModalHtml(){
-  const d = cycleDraft;
-  const clientOptions = DB.clients.map(c=> `<option value="${c.id}" ${d.clientId===c.id?'selected':''}>${escapeHtml(c.name)}</option>`).join('');
-  const candidates = DB.orders
-    .filter(o=> o.clientId===d.clientId && (!o.cycleId || o.cycleId===d.id || !DB.cycles.some(c=> c.id===o.cycleId)))
-    .sort((a,b)=> b.date.localeCompare(a.date));
-  const body = `
-    <div class="field-row">
-      <div class="field"><label for="cy_client">Cliente *</label>
-        <select id="cy_client" onchange="refreshCycleModal(true)" ${d.id?'disabled':''}>${clientOptions || '<option value="">Cadastre um cliente primeiro</option>'}</select>
-      </div>
-      <div class="field"><label for="cy_name">Nome do ciclo *</label><input id="cy_name" value="${escapeHtml(d.name)}" placeholder="Ex: Outubro/2026"></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label for="cy_value">Valor cobrado no mês (R$) *</label><input id="cy_value" type="number" step="0.01" min="0" value="${d.monthlyValue||''}" placeholder="Ex: 4380"></div>
-      <div class="field"><label for="cy_parts">Compras no mês</label>
-        <select id="cy_parts">${[1,2,3,4].map(n=> `<option value="${n}" ${Number(d.parts)===n?'selected':''}>${n} ${n===1?'parte':'partes'}</option>`).join('')}</select>
-      </div>
-    </div>
-    <div class="field-hint" style="margin:-4px 0 14px;">Cada parte é lançada como um pedido normal, na data em que a compra foi feita, mesmo que não caia certinho de 15 em 15 dias.</div>
-
-    <div class="field"><label>Pedidos já lançados que fazem parte deste ciclo</label>
-      ${candidates.length===0 ? `<div class="field-hint">Nenhum pedido deste cliente disponível. Depois de salvar, use "Lançar" em cada parte.</div>` : `
-      <div class="attach-list">
-        ${candidates.map(o=> `<label><input type="checkbox" class="cy_attach" value="${o.id}" ${d.attach.includes(o.id)?'checked':''}>
-          <span style="flex:1;">${fmtDate(o.date)} · ${escapeHtml(o.description||o.type||'Pedido')}</span>
-          <span class="mono" style="color:var(--text-dim);">${fmtBRL(orderTotalCost(o))} custo</span></label>`).join('')}
-      </div>
-      <div class="field-hint">As partes são numeradas pela data: a compra mais antiga vira a parte 1.</div>`}
-    </div>
-    <div class="field"><label for="cy_notes">Observações</label><textarea id="cy_notes">${escapeHtml(d.notes||'')}</textarea></div>
-  `;
-  const foot = `
-    <div>${d.id ? `<button class="btn btn-danger btn-sm" onclick="deleteCycle('${d.id}')">${ic('trash')} Excluir ciclo</button>` : '<span></span>'}</div>
-    <div style="display:flex; gap:8px;"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveCycle()">Salvar ciclo</button></div>
-  `;
-  return modalShell(d.id ? 'Editar ciclo mensal' : 'Novo ciclo mensal', body, foot);
-}
-function readCycleForm(){
-  const d = cycleDraft;
-  const cl = document.getElementById('cy_client');
-  if(cl && !cl.disabled) d.clientId = cl.value;
-  d.name = document.getElementById('cy_name').value;
-  d.monthlyValue = parseFloat(document.getElementById('cy_value').value)||0;
-  d.parts = parseInt(document.getElementById('cy_parts').value)||2;
-  d.notes = document.getElementById('cy_notes').value;
-  d.attach = [...document.querySelectorAll('.cy_attach')].filter(x=> x.checked).map(x=> x.value);
-}
-function refreshCycleModal(clientChanged){
-  const before = cycleDraft.clientId;
-  readCycleForm();
-  if(clientChanged && cycleDraft.clientId !== before){
-    cycleDraft.attach = [];
-    if(!cycleDraft.monthlyValue) cycleDraft.monthlyValue = lastMonthlyValue(cycleDraft.clientId);
-  }
-  document.getElementById('modalRoot').innerHTML = cycleModalHtml();
-}
-function saveCycle(){
-  readCycleForm();
-  const d = cycleDraft;
-  if(!d.clientId){ toast('Selecione o cliente do ciclo.', 'error'); return; }
-  const name = d.name.trim();
-  if(!name){ toast('Dê um nome ao ciclo, por exemplo "Outubro/2026".', 'error'); document.getElementById('cy_name').focus(); return; }
-  if(d.monthlyValue <= 0){ toast('Informe o valor que o cliente paga no mês.', 'error'); document.getElementById('cy_value').focus(); return; }
-  if(DB.cycles.some(c=> c.id!==d.id && c.clientId===d.clientId && c.name.trim().toLowerCase()===name.toLowerCase())){
-    toast('Já existe um ciclo com esse nome para este cliente.', 'error'); return;
-  }
-  const id = d.id || uid();
-  const rec = { clientId: d.clientId, name, monthlyValue: round2(d.monthlyValue), parts: d.parts, notes: d.notes.trim() };
-  if(d.id) Object.assign(DB.cycles.find(c=> c.id===d.id), rec);
-  else DB.cycles.push({ id, createdAt: todayISO(), ...rec });
-
-  // desvincula o que foi desmarcado e numera as partes pela data
-  DB.orders.forEach(o=>{ if(o.cycleId===id && !d.attach.includes(o.id)){ o.cycleId = null; o.cyclePart = null; } });
-  const attached = DB.orders.filter(o=> d.attach.includes(o.id)).sort((a,b)=> a.date.localeCompare(b.date));
-  attached.forEach((o,i)=>{ o.cycleId = id; o.cyclePart = i+1; });
-
-  if(!saveDB()) return;
-  closeModal(); cycleDraft = null;
-  state.view = 'cycles'; render();
-  toast(attached.length > rec.parts ? `Ciclo salvo. Atenção: ${attached.length} pedidos vinculados para ${rec.parts} parte(s).` : 'Ciclo salvo.', attached.length > rec.parts ? 'error' : undefined);
-}
-function deleteCycle(id){
-  const cy = DB.cycles.find(c=> c.id===id);
-  if(!cy) return;
-  const n = DB.orders.filter(o=> o.cycleId===id).length;
-  if(!confirm(`Excluir o ciclo "${cy.name}"?` + (n ? `\n\nOs ${n} pedido(s) vinculados NÃO são apagados, só deixam de fazer parte do ciclo.` : ''))) return;
-  DB.cycles = DB.cycles.filter(c=> c.id!==id);
-  DB.orders.forEach(o=>{ if(o.cycleId===id){ o.cycleId = null; o.cyclePart = null; } });
-  if(!saveDB()) return;
-  closeModal(); render(); toast('Ciclo excluído.');
-}
-
-/* ---------- Modal: pagamento do mês (distribui entre as partes) ---------- */
-function openCyclePaymentModal(id){
-  const cy = DB.cycles.find(c=> c.id===id);
-  if(!cy) return;
-  const t = cycleTotals(cy);
-  const body = `
-    <div class="warn-box">O cliente paga o mês inteiro de uma vez. O valor é distribuído entre as partes em aberto, começando pela parte 1.</div>
-    <div class="field-row">
-      <div class="field"><label for="cp_date">Data do pagamento *</label><input type="date" id="cp_date" value="${todayISO()}"></div>
-      <div class="field"><label for="cp_value">Valor recebido (R$) *</label><input type="number" step="0.01" min="0" id="cp_value" value="${round2(t.balance).toFixed(2)}"></div>
-    </div>
-    <div class="field"><label for="cp_method">Forma de pagamento</label><input id="cp_method" placeholder="PIX, transferência, dinheiro..."></div>
-    <div class="calc-line"><span>Saldo do ciclo</span><b class="mono">${fmtBRL(t.balance)}</b></div>
-  `;
-  const foot = `<span></span><div style="display:flex; gap:8px;"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveCyclePayment('${id}')">Registrar</button></div>`;
-  document.getElementById('modalRoot').innerHTML = modalShell(`Pagamento · ${escapeHtml(cy.name)}`, body, foot);
-}
-function saveCyclePayment(id){
-  const cy = DB.cycles.find(c=> c.id===id);
-  if(!cy) return;
-  const t = cycleTotals(cy);
-  const date = document.getElementById('cp_date').value || todayISO();
-  let value = round2(parseFloat(document.getElementById('cp_value').value)||0);
-  const method = document.getElementById('cp_method').value.trim();
-  if(value <= 0){ toast('Informe o valor recebido.', 'error'); document.getElementById('cp_value').focus(); return; }
-  if(value > round2(t.balance) + 0.005){ toast(`O valor passa do saldo do ciclo (${fmtBRL(t.balance)}). Confira antes de registrar.`, 'error'); return; }
-  const label = (method ? method + ' · ' : '') + 'pagamento do ciclo ' + cy.name;
-  t.orders.forEach(o=>{
-    if(value <= 0.005) return;
-    const bal = round2(orderBalance(o));
-    if(bal <= 0.005) return;
-    const v = Math.min(bal, value);
-    o.payments.push({ id: uid(), date, value: round2(v), method: label });
-    if(orderBalance(o) <= 0.005) o.overdue = false;
-    value = round2(value - v);
-  });
-  if(!saveDB()) return;
-  closeModal(); render(); toast('Pagamento registrado nas partes do ciclo.');
-}
-
-/* ---------- Campos de ciclo dentro do modal de pedido ---------- */
-function orderCycleFields(o){
-  const cycles = cyclesOfClient(o.clientId).slice().reverse();
-  if(cycles.length===0) return '';
-  const cy = cycles.find(c=> c.id===o.cycleId);
-  const parts = cy ? Math.max(1, parseInt(cy.parts)||2) : 2;
-  return `<div class="field-row">
-    <div class="field"><label for="f_cycleId">Ciclo mensal</label>
-      <select id="f_cycleId" onchange="onOrderCycleChange()">
-        <option value="">Não faz parte de um ciclo</option>
-        ${cycles.map(c=> `<option value="${c.id}" ${o.cycleId===c.id?'selected':''}>${escapeHtml(c.name)} · ${fmtBRL(c.monthlyValue)}/mês</option>`).join('')}
-      </select>
-    </div>
-    <div class="field"><label for="f_cyclePart">Parte</label>
-      <select id="f_cyclePart" ${cy?'':'disabled'}>${Array.from({length:parts},(_,i)=>i+1).map(n=> `<option value="${n}" ${o.cyclePart===n?'selected':''}>Parte ${n}</option>`).join('')}</select>
-    </div>
-  </div>`;
-}
-function nextFreePart(cy, exceptOrderId){
-  const parts = Math.max(1, parseInt(cy.parts)||2);
-  const used = DB.orders.filter(o=> o.cycleId===cy.id && o.id!==exceptOrderId).map(o=> o.cyclePart);
-  for(let n=1; n<=parts; n++) if(!used.includes(n)) return n;
-  return parts;
-}
-function onOrderCycleChange(){
-  const id = document.getElementById('f_cycleId').value || null;
-  const cy = DB.cycles.find(c=> c.id===id);
-  orderDraft.cycleId = id;
-  orderDraft.cyclePart = cy ? nextFreePart(cy, orderDraft.id) : null;
-  orderDraft._cyclePicked = true;
-  if(cy && !(Number(orderDraft.saleValue) > 0)) orderDraft.saleValue = round2((Number(cy.monthlyValue)||0) / Math.max(1, parseInt(cy.parts)||2));
-  if(cy){ const ty = document.getElementById('f_type'); if(ty && !orderDraft.id) ty.value = 'Compra sob demanda'; }
-  refreshOrderModal();
 }
 
 /* ============================================================
@@ -1700,6 +1808,22 @@ function renderSettings(){
         <div class="page-sub">Categorias de custo e preferências do sistema</div>
       </div>
     </div>
+    <div class="card" style="max-width:520px; margin-bottom:16px;">
+      <div class="section-title" style="margin:0 0 6px;">Dados do recibo</div>
+      <div class="field-hint" style="margin-bottom:12px;">Aparecem no recibo que você entrega ao cliente. O recibo nunca mostra custos nem lucro.</div>
+      ${(()=>{ const b = business(); return `
+      <div class="field"><label for="bz_name">Nome da empresa</label><input id="bz_name" value="${escapeHtml(b.name)}"></div>
+      <div class="field-row">
+        <div class="field"><label for="bz_doc">CNPJ</label><input id="bz_doc" value="${escapeHtml(b.doc)}"></div>
+        <div class="field"><label for="bz_phone">Telefone</label><input id="bz_phone" type="tel" value="${escapeHtml(b.phone)}"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="bz_city">Cidade</label><input id="bz_city" value="${escapeHtml(b.city)}"></div>
+        <div class="field"><label for="bz_pix">Chave PIX</label><input id="bz_pix" value="${escapeHtml(b.pix)}" placeholder="CNPJ, e-mail, telefone ou aleatória"></div>
+      </div>
+      <div class="field"><label for="bz_footer">Mensagem no rodapé</label><input id="bz_footer" value="${escapeHtml(b.footer)}"></div>`; })()}
+      <button class="btn btn-primary btn-sm" onclick="saveBusiness()">Salvar dados do recibo</button>
+    </div>
     <div class="card" style="max-width:520px;">
       <div class="section-title" style="margin:0 0 12px;">Categorias de custo</div>
       <div id="catList">
@@ -1743,9 +1867,10 @@ function renderSettings(){
     </div>
     <div class="card" style="max-width:520px; margin-top:16px;">
       <div class="section-title" style="margin:0 0 10px;">Dados</div>
-      <div class="field-hint" style="margin-bottom:12px;">Todos os dados ficam salvos localmente neste navegador (localStorage). Nada é enviado para nenhum servidor. Exporte um backup com frequência: limpar o navegador apaga tudo.</div>
+      <div class="field-hint" style="margin-bottom:12px;">Os dados ficam salvos na nuvem, na conta ${escapeHtml(currentUser ? currentUser.email : '')}, e abrem em qualquer aparelho com o mesmo login. Uma cópia de segurança é guardada automaticamente a cada 10 minutos de uso (as últimas 100 ficam disponíveis em Versões anteriores). Exportar um .json de vez em quando continua sendo uma boa ideia.</div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="btn btn-ghost btn-sm" onclick="exportData()">Exportar backup (.json)</button>
+        <button class="btn btn-ghost btn-sm" onclick="openHistory()">${ic('clock')} Versões anteriores</button>
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('importFile').click()">${ic('upload')} Importar arquivo (.json)</button>
         <input type="file" id="importFile" class="hidden-file" accept=".json,application/json" onchange="importDataFile(this)">
         <button class="btn btn-danger btn-sm" onclick="resetData()">${ic('trash')} Apagar todos os dados</button>
@@ -1789,17 +1914,12 @@ function removeProductCategory(i){
   DB.settings.productCategories.splice(i,1);
   saveDB(); render();
 }
-function exportData(){
-  const blob = new Blob([JSON.stringify(DB,null,2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'aba-gestao-backup-'+todayISO()+'.json';
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=> URL.revokeObjectURL(url), 1000);
+function exportData(prefix){
+  downloadJSON(DB, (typeof prefix === 'string' ? prefix : 'aba-gestao-backup-') + todayISO() + '.json');
   toast('Backup exportado.');
 }
 
-const MERGE_COLLECTIONS = ['clients','suppliers','products','purchases','orders','expenses','baskets','stockMoves','cycles'];
+const MERGE_COLLECTIONS = ['clients','suppliers','products','purchases','orders','expenses','baskets','stockMoves'];
 
 function importDataFile(input){
   const file = input.files && input.files[0];
@@ -1819,7 +1939,7 @@ function importDataFile(input){
   reader.readAsText(file);
 }
 function importReplace(data){
-  if(!confirm('Este é um backup completo. Importar vai SUBSTITUIR todos os dados atuais deste navegador.\n\nSe ainda não exportou um backup do que está aqui, cancele e exporte antes. Continuar?')) return;
+  if(!confirm('Este é um backup completo. Importar vai SUBSTITUIR todos os dados atuais da sua conta.\n\nSe ainda não exportou um backup do que está aqui, cancele e exporte antes. Continuar?')) return;
   DB = migrateDB(data);
   saveDB(); render(); toast('Backup importado.');
 }
@@ -1859,13 +1979,13 @@ function importMerge(data){
   if(!total){ toast('Nada novo para importar: esses registros já estão no sistema.'); return; }
   DB = migrateDB(DB);
   saveDB(); render();
-  const labels = { clients:'cliente(s)', suppliers:'fornecedor(es)', products:'produto(s)', purchases:'compra(s)', orders:'pedido(s)', expenses:'despesa(s)', baskets:'cesta(s)', cycles:'ciclo(s) mensal(is)' };
+  const labels = { clients:'cliente(s)', suppliers:'fornecedor(es)', products:'produto(s)', purchases:'compra(s)', orders:'pedido(s)', expenses:'despesa(s)', baskets:'cesta(s)' };
   const parts = Object.entries(counts).filter(([k])=>labels[k]).map(([k,v])=> v+' '+labels[k]);
   toast(parts.length ? 'Importado: ' + parts.join(', ') + '.' : 'Importação concluída.');
 }
 function resetData(){
-  if(!confirm('Isso vai apagar TODOS os dados salvos neste navegador. Deseja continuar?')) return;
-  if(!confirm('Tem certeza? Sem um backup exportado, não há como recuperar.')) return;
+  if(!confirm('Isso vai apagar TODOS os dados da sua conta, em todos os aparelhos. Deseja continuar?')) return;
+  if(!confirm('Tem certeza? Só será possível voltar por Versões anteriores ou por um backup exportado.')) return;
   DB = migrateDB(emptyDB());
   saveDB(); render(); toast('Todos os dados foram apagados.');
 }
@@ -2033,23 +2153,12 @@ function deleteClient(id){
    ============================================================ */
 let orderDraft = null;
 
-function openOrderModal(id, presetClientId, presetCycleId, presetPart){
+function openOrderModal(id, presetClientId){
   const editing = id ? DB.orders.find(o=>o.id===id) : null;
   orderDraft = editing ? JSON.parse(JSON.stringify(editing)) : {
     id:null, clientId: presetClientId||'', date: todayISO(), description:'', type:'Cesta Básica',
     saleValue:0, costs:[], payments:[], baskets:[], stockOut:true, notes:'', overdue:false, receipts:[]
   };
-  if(!editing && presetCycleId){
-    const cy = DB.cycles.find(c=> c.id===presetCycleId);
-    if(cy){
-      orderDraft.clientId = cy.clientId;
-      orderDraft.cycleId = cy.id;
-      orderDraft.cyclePart = presetPart || nextFreePart(cy, null);
-      orderDraft.type = 'Compra sob demanda';
-      orderDraft.saleValue = round2((Number(cy.monthlyValue)||0) / Math.max(1, parseInt(cy.parts)||2));
-      orderDraft.description = `${cy.name} · parte ${orderDraft.cyclePart}`;
-    }
-  }
   if(!Array.isArray(orderDraft.baskets)) orderDraft.baskets = [];
   if(orderDraft.stockOut === undefined) orderDraft.stockOut = true;
   document.getElementById('modalRoot').innerHTML = orderModalHtml(editing);
@@ -2060,7 +2169,7 @@ function orderModalHtml(editing){
   const body = `
     <div class="field-row">
       <div class="field"><label>Cliente *</label>
-        <select id="f_clientId" onchange="refreshOrderModal()">${clientOptions || '<option value="">Cadastre um cliente primeiro</option>'}</select>
+        <select id="f_clientId">${clientOptions || '<option value="">Cadastre um cliente primeiro</option>'}</select>
       </div>
       <div class="field"><label>Data *</label><input type="date" id="f_date" value="${o.date}"></div>
     </div>
@@ -2073,7 +2182,6 @@ function orderModalHtml(editing){
       <div class="field"><label>Valor total cobrado do cliente (R$) *</label><input type="number" step="0.01" min="0" id="f_saleValue" value="${o.saleValue}" oninput="orderDraft.saleValue=parseFloat(this.value)||0; renderOrderTotals();"></div>
     </div>
     <div class="field"><label>Descrição</label><input id="f_description" value="${escapeHtml(o.description)}" placeholder="Ex: 10 Cestas Básicas P"></div>
-    ${orderCycleFields(o)}
 
     <div class="subblock">
       <div class="subblock-head"><div class="subblock-title">Cestas do catálogo</div>${o.baskets.length ? `<button class="inline-link" style="font-size:12px;" onclick="useBasketPrice()">Usar preço das cestas no valor cobrado</button>` : ''}</div>
@@ -2123,7 +2231,7 @@ function orderModalHtml(editing){
   `;
   const foot = `
     <div>${editing ? `<button class="btn btn-danger btn-sm" onclick="if(deleteOrder('${o.id}')) closeModal();">${ic('trash')} Excluir</button>` : '<span></span>'}</div>
-    <div style="display:flex; gap:8px;"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveOrder()">Salvar pedido</button></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-ghost" title="Salva o pedido e abre o recibo para o cliente" onclick="saveOrderAndReceipt()">${ic('receipt')} Salvar e gerar recibo</button><button class="btn btn-primary" onclick="saveOrder()">Salvar pedido</button></div>
   `;
   return modalShell(editing?'Editar pedido':'Novo pedido / serviço', body, foot) ;
 }
@@ -2220,15 +2328,6 @@ function refreshOrderModal(){
   if(cur.type) orderDraft.type = cur.type;
   if(cur.description!==undefined) orderDraft.description = cur.description;
   if(cur.notes!==undefined) orderDraft.notes = cur.notes;
-  // ciclo: a parte escolhida na tela só é lida se o ciclo não acabou de ser trocado
-  const cycSel = document.getElementById('f_cycleId');
-  if(cycSel && !orderDraft._cyclePicked){
-    orderDraft.cycleId = cycSel.value || null;
-    const partSel = document.getElementById('f_cyclePart');
-    orderDraft.cyclePart = orderDraft.cycleId && partSel ? (parseInt(partSel.value)||null) : null;
-  }
-  delete orderDraft._cyclePicked;
-  if(orderDraft.cycleId && !DB.cycles.some(c=> c.id===orderDraft.cycleId && c.clientId===orderDraft.clientId)){ orderDraft.cycleId = null; orderDraft.cyclePart = null; }
   document.getElementById('modalRoot').innerHTML = orderModalHtml(!!orderDraft.id);
   renderOrderTotals();
 }
@@ -2252,21 +2351,20 @@ function renderOrderTotals(){
     ${balance < -0.005 ? `<div class="warn-box danger" style="margin:10px 0 0;">Os pagamentos somam ${fmtBRL(-balance)} a mais que o valor cobrado. Confira os valores.</div>` : ''}
   </div>`;
 }
+function saveOrderAndReceipt(){
+  const id = saveOrder();
+  if(!id) return;
+  const o = DB.orders.find(x=> x.id===id);
+  if(o) openReceiptPicker(o.clientId, id);
+}
 function saveOrder(){
   const clientId = document.getElementById('f_clientId').value;
   if(!clientId){ toast('Selecione um cliente. Se ainda não existe, cadastre em Clientes.', 'error'); return; }
   const saleValue = parseFloat(document.getElementById('f_saleValue').value)||0;
   if(saleValue < 0){ toast('O valor cobrado não pode ser negativo.', 'error'); return; }
   if(saleValue === 0 && !confirm('O valor cobrado do cliente está zerado. Salvar mesmo assim?')) return;
-  const cycSel = document.getElementById('f_cycleId');
-  const cycleId = cycSel && cycSel.value && DB.cycles.some(c=> c.id===cycSel.value && c.clientId===clientId) ? cycSel.value : null;
-  const cyclePart = cycleId ? (parseInt(document.getElementById('f_cyclePart').value)||1) : null;
-  if(cycleId){
-    const clash = DB.orders.find(x=> x.cycleId===cycleId && x.cyclePart===cyclePart && x.id!==orderDraft.id);
-    if(clash && !confirm(`O ciclo ${cycleLabel(cycleId)} já tem uma parte ${cyclePart} (lançada em ${fmtDate(clash.date)}). Salvar como parte ${cyclePart} mesmo assim?`)) return;
-  }
   const data = {
-    clientId, cycleId, cyclePart,
+    clientId,
     date: document.getElementById('f_date').value || todayISO(),
     type: document.getElementById('f_type').value,
     saleValue,
@@ -2294,6 +2392,7 @@ function saveOrder(){
   }
   setMovesForRef('order', id, moves);
   saveDB(); closeModal(); orderDraft=null; render(); toast(moves.length ? 'Pedido salvo e estoque atualizado.' : 'Pedido salvo.');
+  return id;
 }
 
 /* ============================================================
@@ -2925,6 +3024,459 @@ function deleteSupplier(id){
 }
 
 /* ============================================================
+   A RECEBER (saldo em aberto por cliente e baixa em lote)
+   ============================================================ */
+function openOrdersOf(clientId){
+  return DB.orders.filter(o=> o.clientId===clientId && orderBalance(o) > 0.005).sort((a,b)=> a.date.localeCompare(b.date));
+}
+function daysSince(iso){ return Math.floor((new Date(todayISO()+'T00:00:00') - new Date(iso+'T00:00:00')) / 86400000); }
+
+function renderReceivables(){
+  const byClient = {};
+  DB.orders.forEach(o=>{
+    if(orderBalance(o) <= 0.005) return;
+    const g = byClient[o.clientId] || (byClient[o.clientId] = { clientId:o.clientId, orders:[], charged:0, paid:0, due:0, oldest:o.date, overdue:false });
+    g.orders.push(o);
+    g.charged += Number(o.saleValue)||0; g.paid += orderPaid(o); g.due += orderBalance(o);
+    if(o.date < g.oldest) g.oldest = o.date;
+    if(o.overdue) g.overdue = true;
+  });
+  const groups = Object.values(byClient).sort((a,b)=> b.due - a.due);
+  const totalDue = groups.reduce((s,g)=> s+g.due, 0);
+  const overdueDue = groups.filter(g=> g.overdue).reduce((s,g)=> s+g.due, 0);
+
+  // recebimentos recentes: pagamentos lançados juntos (mesmo lote) aparecem numa linha só
+  const rows = {};
+  DB.orders.forEach(o=> (o.payments||[]).forEach(p=>{
+    const key = p.batchId || p.id;
+    const r = rows[key] || (rows[key] = { key, date:p.date, clientId:o.clientId, method:p.method||'', value:0, orderIds:[] });
+    r.value += Number(p.value)||0;
+    if(!r.orderIds.includes(o.id)) r.orderIds.push(o.id);
+  }));
+  const recent = Object.values(rows).sort((a,b)=> (b.date||'').localeCompare(a.date||'')).slice(0,12);
+  const monthStart = todayISO().slice(0,8)+'01';
+  const receivedMonth = Object.values(rows).filter(r=> r.date >= monthStart).reduce((s,r)=> s+r.value, 0);
+
+  return `
+    <div class="topbar">
+      <div>
+        <div class="page-title">A receber</div>
+        <div class="page-sub">Quanto cada cliente ainda deve, somando todos os pedidos em aberto</div>
+      </div>
+    </div>
+    <div class="grid grid-3">
+      ${statCard('Total a receber', fmtBRL(totalDue), 'pending', `${groups.length} cliente(s) com saldo`)}
+      ${statCard('Em atraso', fmtBRL(overdueDue), 'cost', 'Pedidos marcados como atrasados')}
+      ${statCard('Recebido no mês', fmtBRL(receivedMonth), 'revenue', 'Pagamentos lançados neste mês')}
+    </div>
+
+    <div class="section-title">Clientes com saldo em aberto</div>
+    ${groups.length===0 ? `<div class="card">${emptyState('check','Nada a receber','Todos os pedidos estão pagos.')}</div>` : `
+    <div class="table-wrap"><table><thead><tr>
+      <th>Cliente</th><th>Pedidos em aberto</th><th class="td-num">Cobrado</th><th class="td-num">Já pago</th><th class="td-num">Saldo</th><th></th>
+    </tr></thead><tbody>
+      ${groups.map(g=>{
+        const age = daysSince(g.oldest);
+        return `<tr onclick="openSettleModal('${g.clientId}')">
+          <td><div class="client-row-name">${escapeHtml(clientName(g.clientId))} ${g.overdue ? '<span class="badge badge-red">Em atraso</span>' : ''}</div>
+            <div class="client-row-sub">mais antigo de ${fmtDate(g.oldest)}${age>0 ? ` · há ${age} dia(s)` : ''}</div></td>
+          <td>${g.orders.map(o=> `<div class="client-row-sub" style="margin:0;">${fmtDate(o.date)} · ${escapeHtml(o.description||o.type||'Serviço')} · <span class="mono">${fmtBRL(orderBalance(o))}</span></div>`).join('')}</td>
+          <td class="td-num">${fmtBRL(g.charged)}</td>
+          <td class="td-num">${fmtBRL(g.paid)}</td>
+          <td class="td-num" style="color:var(--gold); font-weight:700;">${fmtBRL(g.due)}</td>
+          <td class="td-actions"><div style="display:inline-flex; gap:6px;">
+            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); showReceipt('${g.clientId}', ${escapeHtml(JSON.stringify(g.orders.map(o=>o.id)))}, {date: todayISO(), due:'', note:''})">${ic('receipt')} Demonstrativo</button>
+            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openSettleModal('${g.clientId}')">${ic('check')} Dar baixa</button>
+          </div></td>
+        </tr>`;
+      }).join('')}
+    </tbody></table></div>`}
+
+    <div class="section-title">Recebimentos recentes <span class="hint">um pagamento que cobriu vários pedidos aparece numa linha só</span></div>
+    ${recent.length===0 ? `<div class="card">${emptyState('clock','Nenhum recebimento lançado','Os pagamentos registrados nos pedidos aparecem aqui.')}</div>` : `
+    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Forma</th><th>Pedidos</th><th class="td-num">Valor</th><th></th></tr></thead><tbody>
+      ${recent.map(r=> `<tr style="cursor:default;">
+        <td>${fmtDate(r.date)}</td>
+        <td>${escapeHtml(clientName(r.clientId))}</td>
+        <td>${escapeHtml(r.method||'—')}</td>
+        <td>${r.orderIds.length} pedido(s)</td>
+        <td class="td-num" style="color:#7fe0ab;">${fmtBRL(r.value)}</td>
+        <td class="td-actions"><button class="icon-btn" aria-label="Gerar recibo" title="Gerar recibo destes pedidos" onclick="showReceipt('${r.clientId}', ${escapeHtml(JSON.stringify(r.orderIds))}, {date: todayISO(), due:'', note:''})">${ic('receipt')}</button></td>
+      </tr>`).join('')}
+    </tbody></table></div>`}
+  `;
+}
+
+function openSettleModal(clientId){
+  const orders = openOrdersOf(clientId);
+  if(!orders.length){ toast('Este cliente não tem saldo em aberto.'); return; }
+  const total = round2(orders.reduce((s,o)=> s+orderBalance(o), 0));
+  const body = `
+    <div class="field-hint" style="margin-bottom:12px;">Marque os pedidos que este pagamento cobre. O valor é distribuído do pedido mais antigo para o mais novo, e os pedidos quitados saem da lista de "A receber".</div>
+    <div class="subblock">
+      ${orders.map(o=> `<label class="mini-row" style="cursor:pointer;">
+        <input type="checkbox" class="st-order" value="${o.id}" checked onchange="updateSettleTotal()" style="accent-color:var(--green-500);">
+        <div class="mr-cat">${fmtDate(o.date)}</div>
+        <div class="mr-desc">${escapeHtml(o.description||o.type||'Serviço')}${orderPaid(o)>0 ? ` <span class="client-row-sub">(já pago ${fmtBRL(orderPaid(o))})</span>` : ''}</div>
+        <div class="mr-val" style="color:var(--beige);">${fmtBRL(orderBalance(o))}</div>
+      </label>`).join('')}
+      <div class="totals-mini"><span>Saldo dos pedidos marcados</span><b id="st_sum">${fmtBRL(total)}</b></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label for="st_value">Valor recebido (R$) *</label><input type="number" step="0.01" min="0" id="st_value" value="${total.toFixed(2)}" oninput="updateSettlePreview()"></div>
+      <div class="field"><label for="st_date">Data do pagamento *</label><input type="date" id="st_date" value="${todayISO()}"></div>
+    </div>
+    <div class="field"><label for="st_method">Forma de pagamento</label><input id="st_method" value="PIX" placeholder="PIX, dinheiro, transferência..."></div>
+    <div id="st_preview"></div>
+  `;
+  const foot = `<span></span><div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-ghost" onclick="settlePayment('${clientId}', true)">${ic('receipt')} Dar baixa e gerar recibo</button>
+    <button class="btn btn-primary" onclick="settlePayment('${clientId}', false)">${ic('check')} Dar baixa</button>
+  </div>`;
+  document.getElementById('modalRoot').innerHTML = modalShell('Dar baixa · ' + escapeHtml(clientName(clientId)), body, foot);
+  updateSettlePreview();
+}
+function settleSelected(){
+  const ids = [...document.querySelectorAll('.st-order:checked')].map(i=> i.value);
+  return DB.orders.filter(o=> ids.includes(o.id)).sort((a,b)=> a.date.localeCompare(b.date));
+}
+function updateSettleTotal(){
+  const sum = round2(settleSelected().reduce((s,o)=> s+orderBalance(o), 0));
+  document.getElementById('st_sum').textContent = fmtBRL(sum);
+  document.getElementById('st_value').value = sum.toFixed(2);
+  updateSettlePreview();
+}
+// Distribui o valor do mais antigo para o mais novo
+function allocatePayment(orders, value){
+  let left = round2(value);
+  return orders.map(o=>{
+    const take = round2(Math.min(left, orderBalance(o)));
+    left = round2(left - take);
+    return { order:o, value: take };
+  }).filter(a=> a.value > 0);
+}
+function updateSettlePreview(){
+  const box = document.getElementById('st_preview');
+  const orders = settleSelected();
+  const value = parseFloat(document.getElementById('st_value').value)||0;
+  const sum = round2(orders.reduce((s,o)=> s+orderBalance(o), 0));
+  if(!orders.length){ box.innerHTML = `<div class="warn-box">Marque pelo menos um pedido.</div>`; return; }
+  if(value > sum + 0.005){ box.innerHTML = `<div class="warn-box danger">O valor recebido é ${fmtBRL(value-sum)} maior que o saldo dos pedidos marcados. Confira o valor ou marque mais pedidos.</div>`; return; }
+  if(value <= 0){ box.innerHTML = ''; return; }
+  const alloc = allocatePayment(orders, value);
+  const partial = value < sum - 0.005;
+  box.innerHTML = `<div class="${partial ? 'warn-box' : 'subblock'}" style="margin-bottom:0;">
+    ${partial ? `<div style="margin-bottom:6px;">Pagamento parcial: fica ${fmtBRL(sum-value)} em aberto.</div>` : '<div class="subblock-title" style="margin-bottom:6px;">Como fica</div>'}
+    ${alloc.map(a=> `<div class="calc-line" style="padding:5px 0;"><span>${fmtDate(a.order.date)} · ${escapeHtml(a.order.description||a.order.type||'Serviço')}</span><b class="mono">${fmtBRL(a.value)}${Math.abs(a.value - orderBalance(a.order)) < 0.005 ? ' · quitado' : ''}</b></div>`).join('')}
+  </div>`;
+}
+function settlePayment(clientId, withReceipt){
+  const orders = settleSelected();
+  if(!orders.length){ toast('Marque pelo menos um pedido.', 'error'); return; }
+  const value = round2(parseFloat(document.getElementById('st_value').value)||0);
+  const sum = round2(orders.reduce((s,o)=> s+orderBalance(o), 0));
+  if(value <= 0){ toast('Informe o valor recebido.', 'error'); document.getElementById('st_value').focus(); return; }
+  if(value > sum + 0.005){ toast('O valor recebido é maior que o saldo dos pedidos marcados.', 'error'); return; }
+  const date = document.getElementById('st_date').value || todayISO();
+  const method = document.getElementById('st_method').value.trim();
+  const batchId = uid();
+  const alloc = allocatePayment(orders, value);
+  alloc.forEach(a=>{
+    a.order.payments = a.order.payments || [];
+    a.order.payments.push({ id: uid(), date, value: a.value, method, batchId });
+    if(orderBalance(a.order) <= 0.005) a.order.overdue = false;
+  });
+  if(!saveDB()) return;
+  closeModal(); render();
+  const paidAll = alloc.every(a=> orderBalance(a.order) <= 0.005);
+  toast(`Baixa de ${fmtBRL(value)} em ${alloc.length} pedido(s)${paidAll ? '' : ', com saldo restante'}.`);
+  if(withReceipt) showReceipt(clientId, orders.map(o=>o.id), { date, due:'', note:'' });
+}
+
+/* ============================================================
+   RECIBO DE PAGAMENTO (mostra só valores cobrados, nunca custo ou lucro)
+   ============================================================ */
+function defaultBusiness(){
+  return { name:'ABA Alimentos e Distribuição', doc:'', phone:'', city:'Gama · Brasília/DF', pix:'', footer:'Obrigado pela confiança.' };
+}
+function business(){ return Object.assign(defaultBusiness(), DB.settings.business||{}); }
+
+// Linhas que o cliente vê: cestas com preço de venda quando batem com o total, senão o serviço inteiro
+function receiptLines(o){
+  const sale = round2(o.saleValue);
+  const label = o.description || o.type || 'Serviço';
+  const bs = o.baskets||[];
+  if(bs.length && Math.abs(round2(orderBasketsPrice(o)) - sale) < 0.01){
+    return bs.map(b=> ({ date:o.date, desc: b.name, qty: Number(b.qty)||0, unit: Number(b.unitPrice)||0, total: round2((Number(b.qty)||0)*(Number(b.unitPrice)||0)) }));
+  }
+  return [{ date:o.date, desc: label, qty: 1, unit: sale, total: sale }];
+}
+function receiptRecordFor(orderIds){
+  const key = orderIds.slice().sort().join('|');
+  if(!Array.isArray(DB.receipts)) DB.receipts = [];
+  let r = DB.receipts.find(x=> x.key===key);
+  if(!r){
+    const next = DB.receipts.reduce((m,x)=> Math.max(m, x.number||0), 0) + 1;
+    r = { id: uid(), key, number: next, orderIds: orderIds.slice(), createdAt: todayISO() };
+    DB.receipts.push(r); saveDB();
+  }
+  return r;
+}
+
+function openReceiptPicker(clientId, presetOrderId){
+  const c = DB.clients.find(x=> x.id===clientId);
+  if(!c){ toast('Cliente não encontrado.', 'error'); return; }
+  const orders = DB.orders.filter(o=> o.clientId===clientId).sort((a,b)=> b.date.localeCompare(a.date));
+  if(!orders.length){ toast('Este cliente ainda não tem pedidos.', 'error'); return; }
+  const pre = presetOrderId ? [presetOrderId] : orders.filter(o=> orderBalance(o) > 0.005).map(o=>o.id);
+  const checked = pre.length ? pre : [orders[0].id];
+  const body = `
+    <div class="field-hint" style="margin-bottom:12px;">Marque os pedidos que entram no recibo. O cliente vê apenas o valor cobrado de cada serviço, o que já foi pago e quanto falta pagar.</div>
+    <div class="subblock">
+      ${orders.map(o=> `<label class="mini-row" style="cursor:pointer;">
+        <input type="checkbox" class="rc-order" value="${o.id}" ${checked.includes(o.id)?'checked':''} style="accent-color:var(--green-500);">
+        <div class="mr-cat">${fmtDate(o.date)}</div>
+        <div class="mr-desc">${escapeHtml(o.description||o.type||'Serviço')} ${statusBadge(orderPaymentStatus(o))}</div>
+        <div class="mr-val" style="color:var(--beige);">${fmtBRL(o.saleValue)}</div>
+      </label>`).join('')}
+    </div>
+    <div class="field-row">
+      <div class="field"><label for="rc_date">Data do recibo</label><input type="date" id="rc_date" value="${todayISO()}"></div>
+      <div class="field"><label for="rc_due">Pagar até (opcional)</label><input type="date" id="rc_due"></div>
+    </div>
+    <div class="field"><label for="rc_note">Observação para o cliente (opcional)</label><input id="rc_note" placeholder="Ex: Referente às entregas de novembro"></div>
+    ${business().pix ? '' : `<div class="warn-box">Cadastre sua chave PIX em Configurações → Dados do recibo para ela aparecer no recibo.</div>`}
+  `;
+  const foot = `<span></span><div style="display:flex; gap:8px;"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="generateReceipt('${clientId}')">${ic('receipt')} Gerar recibo</button></div>`;
+  document.getElementById('modalRoot').innerHTML = modalShell('Recibo para ' + escapeHtml(c.name), body, foot);
+}
+function generateReceipt(clientId){
+  const ids = [...document.querySelectorAll('.rc-order:checked')].map(i=> i.value);
+  if(!ids.length){ toast('Marque pelo menos um pedido.', 'error'); return; }
+  const opts = { date: document.getElementById('rc_date').value || todayISO(), due: document.getElementById('rc_due').value, note: document.getElementById('rc_note').value.trim() };
+  closeModal();
+  showReceipt(clientId, ids, opts);
+}
+
+let currentReceiptText = '';
+let RC = null;   // recibo aberto: { clientId, orderIds, opts, record, lines, editing }
+
+// Pagamentos do mesmo lote (um PIX que quitou vários pedidos) viram uma linha só
+function receiptPayments(orders){
+  const map = {};
+  orders.forEach(o=> (o.payments||[]).forEach(p=>{
+    const k = p.batchId || p.id;
+    const g = map[k] || (map[k] = { date:p.date, method:p.method||'', value:0 });
+    g.value = round2(g.value + (Number(p.value)||0));
+  }));
+  return Object.values(map).sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+}
+function originalReceiptLines(orders){
+  return orders.flatMap(receiptLines).map(l=> ({ date:l.date, desc:l.desc, qty:l.qty, unit:l.unit }));
+}
+function lineTotal(l){ return round2((Number(l.qty)||0) * (Number(l.unit)||0)); }
+
+function showReceipt(clientId, orderIds, opts){
+  const record = receiptRecordFor(orderIds);
+  const orders = DB.orders.filter(o=> orderIds.includes(o.id)).sort((a,b)=> a.date.localeCompare(b.date));
+  // se o recibo já foi editado antes, usa a versão editada; os pedidos nunca são alterados
+  const lines = record.override && Array.isArray(record.override.lines) ? JSON.parse(JSON.stringify(record.override.lines)) : originalReceiptLines(orders);
+  if(record.override && record.override.note && !opts.note) opts.note = record.override.note;
+  RC = { clientId, orderIds: orderIds.slice(), opts, record, orders, lines, editing:false };
+  const root = document.getElementById('receiptRoot');
+  root.classList.add('open');
+  document.body.classList.add('rc-printing');
+  drawReceipt();
+  root.scrollTop = 0;
+}
+
+function drawReceipt(){
+  const { clientId, opts, record, orders, lines, editing } = RC;
+  const c = DB.clients.find(x=> x.id===clientId);
+  const biz = business();
+  const total = round2(lines.reduce((s,l)=> s + lineTotal(l), 0));
+  const ordersTotal = round2(orders.reduce((s,o)=> s + (Number(o.saleValue)||0), 0));
+  const payments = receiptPayments(orders);
+  const paid = round2(payments.reduce((s,p)=> s + p.value, 0));
+  const due = round2(Math.max(0, total - paid));
+  const settled = due < 0.005;
+  const number = String(record.number).padStart(4,'0');
+  const showQty = editing || lines.some(l=> Number(l.qty) !== 1);
+  const addr = [c.address, c.city, c.cep ? 'CEP ' + c.cep : ''].filter(Boolean).join(' · ');
+  const edited = !!record.override;
+  const inp = 'class="rc-input"';
+
+  const toolbar = editing ? `
+  <div class="rc-toolbar no-print">
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-ghost btn-sm" onclick="rcMergeLines()">Juntar tudo em uma linha</button>
+      <button class="btn btn-ghost btn-sm" onclick="rcAddLine()">${ic('plus')} Linha</button>
+      <button class="btn btn-ghost btn-sm" onclick="rcRestore()">Voltar ao original</button>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="rcFinishEdit()">${ic('check')} Concluir edição</button>
+  </div>` : `
+  <div class="rc-toolbar no-print">
+    <button class="btn btn-ghost btn-sm" onclick="closeReceipt()">${ic('x')} Fechar</button>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-ghost btn-sm" onclick="rcStartEdit()">${ic('edit')} Editar</button>
+      <button class="btn btn-ghost btn-sm" onclick="copyReceiptText()">Copiar como texto</button>
+      <button class="btn btn-primary btn-sm" onclick="window.print()">${ic('receipt')} Imprimir ou salvar PDF</button>
+    </div>
+  </div>`;
+
+  const notice = editing
+    ? `<div class="rc-notice no-print">Editando só este recibo. Os pedidos e os valores do sistema não mudam.${Math.abs(total-ordersTotal) > 0.005 ? ` <b>Atenção:</b> os pedidos somam ${fmtBRL(ordersTotal)} e o recibo está mostrando ${fmtBRL(total)}.` : ''}</div>`
+    : (edited ? `<div class="rc-notice no-print">Este recibo foi editado. Os pedidos continuam como foram lançados.${Math.abs(total-ordersTotal) > 0.005 ? ` Os pedidos somam ${fmtBRL(ordersTotal)} e o recibo mostra ${fmtBRL(total)}.` : ''}</div>` : '');
+
+  const rowsHtml = lines.map((l,i)=> editing ? `<tr>
+      <td><input type="date" ${inp} value="${escapeHtml(l.date||'')}" onchange="rcSet(${i},'date',this.value)" aria-label="Data"></td>
+      <td><input ${inp} value="${escapeHtml(l.desc)}" oninput="rcSet(${i},'desc',this.value)" aria-label="Descrição"></td>
+      <td class="rc-num-col"><input type="number" step="0.001" min="0" ${inp} style="width:64px; text-align:right;" value="${l.qty}" onchange="rcSet(${i},'qty',this.value)" aria-label="Quantidade"></td>
+      <td class="rc-num-col"><input type="number" step="0.01" min="0" ${inp} style="width:104px; text-align:right;" value="${round2(l.unit).toFixed(2)}" onchange="rcSet(${i},'unit',this.value)" aria-label="Valor unitário"></td>
+      <td class="rc-num-col">${fmtBRL(lineTotal(l))} <button class="icon-btn" style="display:inline-flex; vertical-align:middle; margin-left:4px;" aria-label="Remover linha" onclick="rcRemoveLine(${i})">${ic('trash')}</button></td>
+    </tr>` : `<tr>
+      <td>${fmtDate(l.date)}</td>
+      <td>${escapeHtml(l.desc)}</td>
+      ${showQty ? `<td class="rc-num-col">${fmtQty(l.qty)}</td><td class="rc-num-col">${fmtBRL(l.unit)}</td>` : ''}
+      <td class="rc-num-col">${fmtBRL(lineTotal(l))}</td>
+    </tr>`).join('');
+
+  const html = `${toolbar}${notice}
+  <article class="rc-paper" aria-label="Recibo">
+    <header class="rc-head">
+      <div class="rc-brand">
+        <div class="rc-mark">A</div>
+        <div>
+          <div class="rc-biz">${escapeHtml(biz.name)}</div>
+          <div class="rc-biz-sub">${[biz.doc ? 'CNPJ ' + biz.doc : '', biz.phone, biz.city].filter(Boolean).map(escapeHtml).join(' · ')}</div>
+        </div>
+      </div>
+      <div class="rc-id">
+        <div class="rc-title">${settled ? 'Recibo de pagamento' : 'Demonstrativo de pagamento'}</div>
+        <div class="rc-num">Nº ${number} · ${fmtDate(opts.date)}</div>
+      </div>
+    </header>
+
+    <section class="rc-client">
+      <div class="rc-label">Cliente</div>
+      <div class="rc-client-name">${escapeHtml(c.name)}</div>
+      ${c.doc ? `<div class="rc-muted">CPF/CNPJ ${escapeHtml(c.doc)}</div>` : ''}
+      ${addr ? `<div class="rc-muted">${escapeHtml(addr)}</div>` : ''}
+    </section>
+
+    <table class="rc-table">
+      <thead><tr><th>Data</th><th>Serviço</th>${showQty ? '<th class="rc-num-col">Qtd</th><th class="rc-num-col">Valor un.</th>' : ''}<th class="rc-num-col">Valor</th></tr></thead>
+      <tbody>${rowsHtml || `<tr><td colspan="5" class="rc-muted">Nenhuma linha.</td></tr>`}</tbody>
+    </table>
+
+    <section class="rc-totals">
+      <div class="rc-line"><span>Total dos serviços</span><b>${fmtBRL(total)}</b></div>
+      ${payments.map(p=> `<div class="rc-line rc-muted"><span>Pago em ${fmtDate(p.date)}${p.method ? ' · ' + escapeHtml(p.method) : ''}</span><span>− ${fmtBRL(p.value)}</span></div>`).join('')}
+      <div class="rc-line rc-grand ${settled?'rc-ok':''}"><span>${settled ? 'Pago' : 'Valor a pagar'}</span><b>${fmtBRL(settled ? total : due)}</b></div>
+      ${!settled && opts.due ? `<div class="rc-line rc-muted"><span>Vencimento</span><span>${fmtDate(opts.due)}</span></div>` : ''}
+    </section>
+
+    ${settled
+      ? `<p class="rc-text">Recebemos de <b>${escapeHtml(c.name)}</b> a importância de <b>${fmtBRL(total)}</b> referente aos serviços listados acima.</p>`
+      : (biz.pix ? `<div class="rc-pix"><div class="rc-label">Pagamento via PIX</div><div class="rc-pix-key">${escapeHtml(biz.pix)}</div></div>` : '')}
+    ${editing
+      ? `<div class="rc-text"><div class="rc-label" style="margin-bottom:4px;">Observação para o cliente</div><textarea ${inp} rows="2" oninput="RC.opts.note=this.value" placeholder="Ex: Referente às entregas de novembro">${escapeHtml(opts.note||'')}</textarea></div>`
+      : (opts.note ? `<p class="rc-text">${escapeHtml(opts.note)}</p>` : '')}
+
+    <footer class="rc-foot">
+      ${settled ? `<div class="rc-sign"><div class="rc-sign-line"></div><div>${escapeHtml(biz.name)}</div></div>` : ''}
+      ${biz.footer ? `<div class="rc-muted">${escapeHtml(biz.footer)}</div>` : ''}
+    </footer>
+  </article>`;
+
+  // texto simples para colar numa mensagem
+  const t = [];
+  t.push(`*${biz.name}*`);
+  t.push(`${settled ? 'Recibo de pagamento' : 'Demonstrativo de pagamento'} nº ${number} · ${fmtDate(opts.date)}`);
+  t.push(`Cliente: ${c.name}`, '');
+  lines.forEach(l=> t.push(`${fmtDate(l.date)} · ${l.desc}${Number(l.qty)!==1 ? ` (${fmtQty(l.qty)} × ${fmtBRL(l.unit)})` : ''}: ${fmtBRL(lineTotal(l))}`));
+  t.push('', `Total: ${fmtBRL(total)}`);
+  payments.forEach(p=> t.push(`Pago em ${fmtDate(p.date)}: ${fmtBRL(p.value)}`));
+  t.push(settled ? '*Pago integralmente.*' : `*Valor a pagar: ${fmtBRL(due)}*`);
+  if(!settled && opts.due) t.push(`Vencimento: ${fmtDate(opts.due)}`);
+  if(!settled && biz.pix) t.push(`PIX: ${biz.pix}`);
+  if(opts.note) t.push('', opts.note);
+  currentReceiptText = t.join('\n');
+
+  document.getElementById('receiptRoot').innerHTML = html;
+}
+
+/* --- edição do recibo (guarda só no registro do recibo, nunca nos pedidos) --- */
+function rcStartEdit(){ RC.editing = true; drawReceipt(); }
+function rcSet(i, field, val){
+  const l = RC.lines[i]; if(!l) return;
+  if(field==='qty' || field==='unit'){ const n = parseFloat(val); l[field] = isFinite(n) && n >= 0 ? n : 0; drawReceipt(); }
+  else l[field] = val;   // texto: sem redesenhar para não perder o cursor
+}
+function rcAddLine(){ RC.lines.push({ date: RC.opts.date || todayISO(), desc:'', qty:1, unit:0 }); drawReceipt(); }
+function rcRemoveLine(i){ RC.lines.splice(i,1); drawReceipt(); }
+function rcMergeLines(){
+  if(!RC.lines.length) return;
+  const total = round2(RC.lines.reduce((s,l)=> s + lineTotal(l), 0));
+  const types = [...new Set(RC.orders.map(o=> o.type).filter(Boolean))];
+  const lastDate = RC.lines.map(l=> l.date).filter(Boolean).sort().pop() || RC.opts.date;
+  RC.lines = [{ date: lastDate, desc: types.length===1 ? types[0] : 'Serviços prestados', qty:1, unit: total }];
+  drawReceipt();
+}
+function rcRestore(){
+  RC.lines = originalReceiptLines(RC.orders);
+  delete RC.record.override;
+  saveDB();
+  drawReceipt();
+  toast('Recibo voltou aos valores dos pedidos.');
+}
+function rcFinishEdit(){
+  const bad = RC.lines.find(l=> !String(l.desc||'').trim());
+  if(bad){ toast('Preencha a descrição de todas as linhas.', 'error'); return; }
+  if(!RC.lines.length){ toast('O recibo precisa de pelo menos uma linha.', 'error'); return; }
+  const original = JSON.stringify(originalReceiptLines(RC.orders));
+  if(JSON.stringify(RC.lines) === original && !RC.opts.note) delete RC.record.override;
+  else RC.record.override = { lines: JSON.parse(JSON.stringify(RC.lines)), note: RC.opts.note || '' };
+  saveDB();
+  RC.editing = false;
+  drawReceipt();
+  toast('Edição do recibo salva.');
+}
+function closeReceipt(){
+  if(RC && RC.editing && !confirm('Sair sem concluir a edição? As mudanças deste recibo serão descartadas.')) return;
+  RC = null;
+  const root = document.getElementById('receiptRoot');
+  root.classList.remove('open'); root.innerHTML = '';
+  document.body.classList.remove('rc-printing');
+}
+function copyReceiptText(){
+  const done = ()=> toast('Texto do recibo copiado.');
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(currentReceiptText).then(done, fallbackCopy);
+  } else fallbackCopy();
+  function fallbackCopy(){
+    const ta = document.createElement('textarea');
+    ta.value = currentReceiptText; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try{ ok = document.execCommand('copy'); }catch(_){}
+    ta.remove();
+    ok ? done() : toast('Não foi possível copiar. Selecione o texto do recibo manualmente.', 'error');
+  }
+}
+function saveBusiness(){
+  DB.settings.business = {
+    name: document.getElementById('bz_name').value.trim() || defaultBusiness().name,
+    doc: document.getElementById('bz_doc').value.trim(),
+    phone: document.getElementById('bz_phone').value.trim(),
+    city: document.getElementById('bz_city').value.trim(),
+    pix: document.getElementById('bz_pix').value.trim(),
+    footer: document.getElementById('bz_footer').value.trim(),
+  };
+  if(saveDB()) toast('Dados do recibo salvos.');
+}
+
+/* ============================================================
    AFTER RENDER / INIT
    ============================================================ */
 function afterRender(){
@@ -2934,11 +3486,12 @@ function afterRender(){
 }
 
 document.addEventListener('keydown', e=>{
-  if(e.key==='Escape' && document.getElementById('modalOverlay')) closeModal();
+  if(e.key!=='Escape') return;
+  if(document.getElementById('modalOverlay')) closeModal();
+  else if(document.getElementById('receiptRoot').classList.contains('open')) closeReceipt();
 });
 
-render();
-if(loadWarning) toast(loadWarning, 'error');
+boot();
 </script>
 
 

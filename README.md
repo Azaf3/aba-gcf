@@ -22,22 +22,27 @@ Sistema de gestão financeira e operacional da **ABA Alimentos e Distribuição*
 | 📊 **Dashboard** | Receita, custos, lucro e margem em tempo real, com filtro por período |
 | 👥 **Clientes** | Cadastro completo com histórico individual de pedidos e lucro gerado |
 | 📦 **Pedidos / Serviços** | Cestas básicas e compras sob demanda, com cálculo automático de lucro |
-| 📅 **Ciclos mensais** | Clientes com valor fechado por mês: junta as compras do mês (parte 1, parte 2...), divide o pagamento entre elas e compara custo e lucro com o mês anterior |
 | 💰 **Custos** | Compras, frete, gasolina, entrega e outras categorias personalizáveis |
 | 🧾 **Comprovantes** | Suporte a compras sem nota, sem travar o cálculo do lucro |
 | 💳 **Pagamentos** | Controle de recebimento, inclusive parcelado |
 | 🧮 **Calculadora** | Simula o lucro de uma venda antes de fechar negócio |
 | 📈 **Gráficos** | Receita × custos × lucro, custos por categoria, ranking de clientes |
+| 📦 **Estoque** | Saldo por produto, estoque mínimo com alerta, entradas, saídas e ajuste por contagem |
+| 🧺 **Cestas** | Composição de produtos, custo calculado pelo último preço pago, margem e preço sugerido |
+| 🚚 **Fornecedores** | Cadastro, total comprado e histórico de compras por fornecedor |
+| 📥 **A receber** | Saldo em aberto por cliente somando todos os pedidos, baixa de um pagamento em vários pedidos de uma vez e histórico de recebimentos |
+| 🧾 **Recibo** | Recibo ou demonstrativo para o cliente com valores cobrados, pagamentos e saldo, sem custos; imprime, salva PDF ou copia como texto |
+| 💾 **Backup** | Exportação e importação (.json), inclusive arquivos de lançamento que só acrescentam registros |
 
 ## 🛠️ Tecnologia
 
-Aplicação em **HTML, CSS e JavaScript puro** — sem build tools, sem dependências de instalação. Os dados ficam salvos localmente no navegador (`localStorage`), sem backend nem banco de dados externo.
+Aplicação em **HTML, CSS e JavaScript puro**, sem build. Os dados ficam no **Supabase** (login por e-mail e senha, uma linha por usuário com os dados em JSON, regras de acesso por usuário e cópias automáticas). O navegador guarda uma cópia local para funcionar sem internet; o que for salvo offline sobe quando a conexão volta.
+
+A estrutura do banco está em [`supabase.sql`](supabase.sql). Todas as tabelas têm o prefixo `aba_` e só os usuários listados em `aba_usuarios` acessam o sistema.
 
 ## 🚀 Como usar
 
-Abra o arquivo `index.html` diretamente no navegador. Não precisa de servidor nem internet (exceto para carregar fontes e gráficos via CDN).
-
-> ⚠️ **Importante:** os dados são salvos por navegador/dispositivo — abrir o mesmo arquivo em outro computador não traz os dados já cadastrados. Use **Configurações → Exportar backup (.json)** com frequência para não perder informações.
+Abra o link do GitHub Pages, entre com o seu login e, no primeiro acesso, importe o backup (.json) da versão anterior. Os mesmos dados abrem no computador e no celular.
 
 ## 🗺️ Roadmap
 
@@ -45,7 +50,9 @@ Abra o arquivo `index.html` diretamente no navegador. Não precisa de servidor n
 - [x] Controle de estoque
 - [x] Cadastro de fornecedores
 - [x] Cestas com composição de produtos e custo automático
-- [x] Ciclos mensais para clientes com valor fechado
+- [x] Importação de backup e de lançamentos
+- [x] A receber, recibo para o cliente
+- [x] Versão online com login e dados na nuvem
 - [ ] Relatórios avançados e exportação
 - [ ] Lucro líquido (com despesas administrativas)
 
