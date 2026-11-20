@@ -497,15 +497,14 @@ button:focus-visible, .chip:focus-visible, a:focus-visible, select:focus-visible
 .auth-side > *{ position:relative; z-index:1; }
 .auth-logo{ width:200px; height:auto; display:block; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.35)); }
 .auth-hero{ max-width:420px; margin-top:auto; padding-top:40px; }
-.auth-ledger{ margin-top:28px; }
+.auth-stats{ margin-top:32px; display:flex; gap:44px; }
+.auth-stats div{ display:flex; flex-direction:column; gap:4px; }
+.auth-stats b{ font-family: var(--font-display); font-weight:600; font-size:44px; line-height:1; letter-spacing:-1.5px; color: var(--lime); text-shadow: 0 0 24px rgba(181,242,90,0.35); }
+.auth-stats span{ font-size:13.5px; color: var(--cream-dim); }
 .auth-foot{ margin-top:28px; }
 .auth-hero h1{ font-family: var(--font-display); font-weight:700; font-size: 38px; line-height:1.12; letter-spacing:-1px; color: var(--cream); }
 .auth-hero h1 em{ font-style:normal; color: var(--lime); white-space:nowrap; }
 .auth-hero p{ margin-top:16px; font-size:15px; line-height:1.6; color: var(--cream-dim); }
-.auth-ledger{ display:flex; flex-direction:column; gap:0; max-width:340px; font-family: var(--font-mono); font-size:12.5px; color: rgba(239,231,211,0.7); }
-.auth-ledger div{ display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid rgba(239,231,211,0.10); }
-.auth-ledger div span:last-child{ color: var(--lime); }
-.auth-ledger div:last-child{ border-bottom:none; }
 .auth-foot{ font-size:12px; color: rgba(239,231,211,0.45); }
 .auth-wrap{ display:flex; align-items:center; justify-content:center; padding:40px 24px; width:100%; position:relative; overflow:hidden; isolation:isolate; }
 .auth-card{ position:relative; z-index:1; background: rgba(16,19,17,0.62); border:1px solid rgba(181,242,90,0.14); border-radius:22px; padding:34px 32px 26px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 30px 80px -30px rgba(0,0,0,0.8); }
@@ -566,7 +565,10 @@ button:focus-visible, .chip:focus-visible, a:focus-visible, select:focus-visible
   .auth-logo{ width:96px; }
   .auth-hero h1{ font-size:26px; letter-spacing:-.6px; }
   .auth-hero p{ font-size:14px; margin-top:8px; }
-  .auth-ledger, .auth-foot{ display:none; }
+  .auth-foot{ display:none; }
+  .auth-stats{ margin-top:14px; gap:28px; }
+  .auth-stats b{ font-size:28px; }
+  .auth-stats span{ font-size:12px; }
   .auth-wrap{ align-items:flex-start; padding:24px 16px 40px; flex:1; }
   .auth-card{ padding:26px 20px 20px; border-radius:18px; }
   .aa-top{ display:none; }
@@ -939,17 +941,29 @@ function screen(inner){
         <h1>O caixa da ABA, <em>em dia</em>.</h1>
         <p>Pedidos, compras, estoque e o que falta receber, num lugar só.</p>
       </div>
-      <div class="auth-ledger" aria-hidden="true">
-        <div><span>Pedidos e recibos</span><span>01</span></div>
-        <div><span>Compras e estoque</span><span>02</span></div>
-        <div><span>Cestas e custos</span><span>03</span></div>
-        <div><span>A receber</span><span>04</span></div>
-      </div>
+      ${loginStatsHtml()}
       <div class="auth-foot">ABA Alimentos e Distribuição · Gama, Brasília/DF</div>
     </aside>
     <div class="auth-wrap">${authAnimHtml()}<div class="auth-card">${inner}</div></div>
   </div>`;
 }
+// Contagem de serviços na tela de entrar. Antes do login o banco não libera nada (RLS),
+// então o número é o do último acesso neste aparelho, guardado só como contagem (nenhum valor em R$).
+const LOGIN_STATS_KEY = 'aba-gestao-contagem';
+function saveLoginStats(){
+  try{ localStorage.setItem(LOGIN_STATS_KEY, JSON.stringify({ servicos: DB.orders.length, clientes: DB.clients.length })); }catch(_){}
+}
+function loginStatsHtml(){
+  let st = null;
+  try{ st = JSON.parse(localStorage.getItem(LOGIN_STATS_KEY) || 'null'); }catch(_){}
+  if(!st || !(st.servicos > 0)) return '';
+  const n = v=> Number(v).toLocaleString('pt-BR');
+  return `<div class="auth-stats">
+    <div><b>${n(st.servicos)}</b><span>serviços registrados</span></div>
+    ${st.clientes > 0 ? `<div><b>${n(st.clientes)}</b><span>clientes atendidos</span></div>` : ''}
+  </div>`;
+}
+
 // Fundo animado do lado do formulário: ondas que correm devagar e folhas subindo (só CSS, sem custo de JS)
 function authAnimHtml(){
   const wave = 'M0 200C240 120 480 120 720 200S1200 280 1440 200S1920 120 2160 200S2640 280 2880 200';
@@ -1440,6 +1454,7 @@ function render(){
   const caret = focusId ? ae.selectionStart : null;
   const app = document.getElementById('app');
   app.innerHTML = appShell();
+  saveLoginStats();
   const root = document.getElementById('viewRoot');
   if(state.view==='dashboard') root.innerHTML = renderDashboard();
   else if(state.view==='clients') root.innerHTML = renderClients();
