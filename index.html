@@ -514,12 +514,16 @@ button:focus-visible, .chip:focus-visible, a:focus-visible, select:focus-visible
 /* fundo animado dentro do sistema (bem mais apagado que o do login) */
 .app{ position:relative; z-index:1; }
 .app-anim{ position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
-.app-anim .aa-glow{ left:70%; top:20%; width:800px; height:800px; margin:-400px 0 0 -400px; background: radial-gradient(circle, rgba(181,242,90,0.07), transparent 65%); animation-duration: 22s; }
-.app-anim .aa-band{ bottom:-20px; height:220px; opacity:.9; }
-.app-anim .aw.w3{ animation-duration: 48s; filter:none; }
-.app-anim .aw.w5{ animation-duration: 64s; top:14px; filter:none; }
+.app-anim .auth-anim{ opacity:.45; }
+.app-anim .aw, .app-anim .aa-leaf{ filter:none !important; }
+.app-anim .aa-glow{ animation:none; }
+.app-anim .aw path:first-child:not(:only-child){ display:none; }
+.app-anim .aa-leaf.l2, .app-anim .aa-leaf.l5{ display:none; }
+.aw, .aa-leaf, .aa-glow{ will-change: transform; }
+.app-anim .aa-leaf{ opacity:0; }
+.app-anim .aa-leaf.l3, .app-anim .aa-leaf.l6, .app-anim .aa-leaf.l7{ display:none; }
 body.anim-paused .aw, body.anim-paused .aa-glow, body.anim-paused .aa-leaf{ animation-play-state: paused; }
-@media (max-width: 880px){ .app-anim .aa-band{ height:140px; } }
+@media (max-width: 880px){ .app-anim .aa-band{ height:150px; } .app-anim .aa-top{ display:none; } }
 /* cards: levemente translúcidos para a onda aparecer de leve; ao passar o mouse sobem um pouco e a borda acende */
 .main .card{ background: rgba(23,26,25,0.88); transition: transform .25s cubic-bezier(.2,.7,.2,1), border-color .25s ease, box-shadow .25s ease; }
 .main .stat-card.stat-hero{ background: radial-gradient(120% 140% at 100% 0%, #d4fb8f 0%, var(--lime) 35%, var(--lime-2) 100%); }
@@ -531,7 +535,7 @@ body.anim-paused .aw, body.anim-paused .aa-glow, body.anim-paused .aa-leaf{ anim
   .main .stat-card:hover .stat-icon{ transform: scale(1.08) rotate(-4deg); }
 }
 .stat-icon{ transition: transform .25s ease; }
-@media (prefers-reduced-motion: reduce){ .main .card, .main .card:hover{ transform:none; transition:none; } .main .stat-card::after{ display:none; } .app-anim .aw, .app-anim .aa-glow{ animation:none; } }
+@media (prefers-reduced-motion: reduce){ .main .card, .main .card:hover{ transform:none; transition:none; } .main .stat-card::after{ display:none; } }
 /* fundo animado */
 .auth-anim{ position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
 .aa-glow{ position:absolute; width:900px; height:900px; border-radius:50%; left:35%; top:40%; margin:-450px 0 0 -450px; background: radial-gradient(circle, rgba(181,242,90,0.16), transparent 65%); animation: aaGlow 14s ease-in-out infinite alternate; }
@@ -987,27 +991,13 @@ function loginStatsHtml(){
   </div>`;
 }
 
-// Fundo animado dentro do sistema: versão leve do login (2 ondas e um brilho), só transform/opacity,
-// pausa com a aba escondida e pode ser desligado em Configurações (preferência deste aparelho).
-const APP_ANIM_KEY = 'aba-gestao-animacao';
-function appAnimEnabled(){ try{ return localStorage.getItem(APP_ANIM_KEY) !== 'off'; }catch(_){ return true; } }
+// Fundo animado dentro do sistema: a mesma cena do login (ondas e folhas), mais apagada para não competir com os números.
+// Criado uma vez fora do #app, porque render() refaz o #app a cada letra digitada. Respeita "reduzir movimento" do aparelho.
 function mountAppAnim(){
-  let el = document.getElementById('appAnim');
-  if(!appAnimEnabled()){ if(el) el.remove(); return; }
-  if(el) return;
-  const wave = 'M0 200C240 120 480 120 720 200S1200 280 1440 200S1920 120 2160 200S2640 280 2880 200';
-  const layer = (cls, stroke, fill) => `<svg class="aw ${cls}" viewBox="0 0 2880 400" preserveAspectRatio="none">${fill ? `<path d="${wave}V400H0Z" fill="${fill}"/>` : ''}<path d="${wave}" fill="none" stroke="${stroke}" stroke-width="3"/></svg>`;
-  document.body.insertAdjacentHTML('afterbegin', `<div id="appAnim" class="app-anim" aria-hidden="true">
-    <div class="aa-glow"></div>
-    <div class="aa-band">${layer('w3','rgba(181,242,90,0.4)','rgba(143,212,58,0.05)')}${layer('w5','rgba(240,194,90,0.3)','')}</div>
-  </div>`);
+  if(document.getElementById('appAnim')) return;
+  document.body.insertAdjacentHTML('afterbegin', `<div id="appAnim" class="app-anim" aria-hidden="true">${authAnimHtml()}</div>`);
 }
 function unmountAppAnim(){ const el = document.getElementById('appAnim'); if(el) el.remove(); }
-function toggleAppAnim(on){
-  try{ localStorage.setItem(APP_ANIM_KEY, on ? 'on' : 'off'); }catch(_){}
-  mountAppAnim();
-  toast(on ? 'Animação de fundo ligada.' : 'Animação de fundo desligada.');
-}
 document.addEventListener('visibilitychange', ()=> document.body.classList.toggle('anim-paused', document.hidden));
 
 // Fundo animado do lado do formulário: ondas que correm devagar e folhas subindo (só CSS, sem custo de JS)
@@ -2125,11 +2115,6 @@ function renderSettings(){
         <div class="page-title">Configurações</div>
         <div class="page-sub">Categorias de custo e preferências do sistema</div>
       </div>
-    </div>
-    <div class="card" style="max-width:520px; margin-bottom:16px;">
-      <div class="section-title" style="margin:0 0 6px;">Aparência</div>
-      <label class="checkbox-row" style="font-size:13.5px; cursor:pointer;"><input type="checkbox" ${appAnimEnabled()?'checked':''} onchange="toggleAppAnim(this.checked)"> Animação de fundo (ondas)</label>
-      <div class="field-hint">Vale só para este aparelho. Desligue se o celular ou computador ficar lento.</div>
     </div>
     <div class="card" style="max-width:520px; margin-bottom:16px;">
       <div class="section-title" style="margin:0 0 6px;">Dados do recibo</div>
