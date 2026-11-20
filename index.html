@@ -199,20 +199,15 @@ a{ color: inherit; }
 .stat-hero .stat-label{ color: rgba(13,24,6,0.7); }
 .stat-hero .stat-value{ color: var(--lime-ink); }
 .stat-hero .stat-foot{ color: rgba(13,24,6,0.65); }
-.stat-hero .stat-icon{ background: rgba(13,24,6,0.12); color: var(--lime-ink); }
+.stat-hero .stat-icon{ background: rgba(13,24,6,0.12); color: var(--lime-ink); border-color: transparent; }
 .stat-card.stat-hero.is-neg{ background: var(--red); }
 .stat-hero.is-neg .stat-label, .stat-hero.is-neg .stat-value, .stat-hero.is-neg .stat-foot, .stat-hero.is-neg .stat-icon{ color:#fff; }
 .trend-up{ color: var(--pos); }
 .trend-down{ color: var(--neg); }
 
-.ic-revenue{ background: var(--green-tint); color: var(--green-600);}
-.ic-cost{ background: var(--gold-tint); color: var(--gold);}
-.ic-profit{ background: var(--green-tint); color: var(--green-600);}
-.ic-margin{ background: var(--bg-soft); color: var(--beige-dim);}
-.ic-pending{ background: var(--red-tint); color: var(--red);}
-.ic-clients{ background: var(--green-tint); color: var(--green-600);}
-.ic-orders{ background: var(--gold-tint); color: var(--gold);}
-.ic-expenses{ background: var(--bg-soft); color: var(--beige-dim);}
+/* ícones dos números: todos no mesmo estilo; cor só em alerta */
+.stat-icon{ background: var(--surface-2); color: var(--lime); border:1px solid var(--border-soft); }
+.stat-icon.ic-pending{ background: var(--red-tint); color: var(--red); border-color: transparent; }
 
 .section-title{ font-family: var(--font-display); font-weight:500; font-size:18px; color: var(--beige); margin: 32px 0 14px; display:flex; align-items:baseline; justify-content:space-between; gap:12px; letter-spacing:-.2px; }
 .section-title .hint{ font-size:12px; color:var(--text-faint); font-weight:400; font-family:var(--font-body); letter-spacing:0; }
@@ -233,7 +228,30 @@ a{ color: inherit; }
 .card .table-wrap{ box-shadow:none; }
 .table-flat{ border:none; border-radius:0; margin-top:12px; }
 .table-flat table{ min-width:0; }
-@media (max-width: 720px){ .table-flat table{ min-width:460px; } }
+@media (max-width: 720px){
+  /* no celular cada linha da tabela vira um card (rótulos vêm do cabeçalho, ver labelTables) */
+  .table-wrap.cardify{ border:none; background:transparent; overflow:visible; box-shadow:none; }
+  .card .table-wrap.cardify{ padding:0 14px 14px; }
+  .cardify table{ min-width:0; }
+  .cardify thead{ display:none; }
+  .cardify tbody{ display:flex; flex-direction:column; gap:10px; }
+  .cardify tbody tr{ display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; background: var(--surface); border:1px solid var(--border-soft); border-radius:14px; padding:14px; }
+  .card .cardify tbody tr{ background: var(--surface-2); }
+  .cardify tbody td{ display:flex; flex-direction:column; align-items:flex-start; gap:3px; padding:0; border:none; text-align:left; min-width:0; }
+  .cardify tbody td::before{ content:attr(data-label); font-family: var(--font-body); font-size:11px; color: var(--text-faint); }
+  .cardify tbody td:first-child{ grid-column:1/-1; }
+  .cardify tbody td:first-child::before, .cardify tbody td.td-actions::before, .cardify tbody td[data-label=""]::before{ display:none; }
+  .cardify tbody td.td-actions{ grid-column:1/-1; flex-direction:row; justify-content:flex-end; padding-top:10px; border-top:1px solid var(--border-soft); }
+  .cardify tbody td.td-actions:empty{ display:none; }
+  .cardify .empty-row{ display:block; }
+  .cardify .empty-row td{ display:block; }
+  .cardify .empty-row td::before{ display:none; }
+}
+@keyframes riseIn{ from{ opacity:0; transform: translateY(8px); } to{ opacity:1; transform:none; } }
+.anim-in .topbar, .anim-in .period-bar, .anim-in .grid > *, .anim-in > .card, .anim-in > .table-wrap, .anim-in .toolbar{ animation: riseIn .38s cubic-bezier(.2,.7,.2,1) both; }
+.anim-in .grid > *:nth-child(2){ animation-delay:.04s; } .anim-in .grid > *:nth-child(3){ animation-delay:.08s; } .anim-in .grid > *:nth-child(4){ animation-delay:.12s; }
+.anim-in .grid > *:nth-child(n+5){ animation-delay:.16s; }
+@media (prefers-reduced-motion: reduce){ .anim-in *{ animation:none !important; } }
 table{ width:100%; border-collapse:collapse; font-size:13.5px; min-width:600px; }
 thead th{ text-align:left; font-size:11.5px; font-weight:600; color: var(--text-dim); padding:11px 14px; background: var(--surface-2); border-bottom:1px solid var(--border); white-space:nowrap; }
 tbody td{ padding:12px 14px; border-bottom:1px solid var(--border-soft); color: var(--text); vertical-align:middle;}
@@ -447,7 +465,6 @@ button:focus-visible, .chip:focus-visible, a:focus-visible, select:focus-visible
   .mobile-topbar .sync{ color: var(--cream-dim); }
   .mobile-topbar .sync-label{ display:none; }
   .sidebar-scrim{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:35;}
-  .table-wrap:not(.table-flat) tbody td:first-child{ min-width:170px; }
   .sidebar-scrim.open{ display:block; }
   .topbar{ margin-bottom:16px; padding-bottom:14px; }
   .page-title{ font-size:22px; }
@@ -1433,7 +1450,7 @@ function renderDashboard(){
       ${renderFunnel(t, despesas)}
     </div>
 
-    <div class="grid grid-2" style="margin-top:26px; align-items:start;">
+    <div class="grid grid-2" style="margin-top:26px;">
       <div class="card chart-card">
         <div class="section-title" style="margin:0 0 10px;">Receita × Custos × Lucro <span class="hint">últimos 6 meses</span></div>
         <canvas id="chartRevenue"></canvas>
@@ -1444,7 +1461,7 @@ function renderDashboard(){
       </div>
     </div>
 
-    <div class="grid grid-2" style="margin-top:20px; align-items:start;">
+    <div class="grid grid-2" style="margin-top:20px;">
       <div class="card">
         <div class="section-title" style="margin:0 0 12px;">Clientes mais lucrativos</div>
         ${renderTopClients(orders)}
@@ -1455,7 +1472,7 @@ function renderDashboard(){
       </div>
     </div>
 
-    <div class="grid grid-2" style="margin-top:20px; align-items:start;">
+    <div class="grid grid-2" style="margin-top:20px;">
       <div class="card" style="padding:0;">
         <div class="section-title" style="margin:0; padding:18px 18px 0;">Últimos pedidos</div>
         ${renderMiniOrdersTable(orders.slice().sort((a,b)=> b.date.localeCompare(a.date)).slice(0,6))}
@@ -1638,13 +1655,27 @@ function buildDashboardCharts(){
   orders.forEach(o=>{ const m = costsByCategory(o); Object.entries(m).forEach(([k,v])=> catTotals[k]=(catTotals[k]||0)+v); });
   const catLabels = Object.keys(catTotals);
   const catVals = Object.values(catTotals);
-  const palette = ['#b5f25a','#7fcf35','#4d8a2c','#e6f8c6','#f0c25a','#e5636a','#3a413c'];
+  const palette = ['#b5f25a','#4d8a2c','#f0c25a','#e6f8c6','#7fcf35','#e5636a','#5b635e'];
+  const catTotal = catVals.reduce((a,b)=> a+b, 0);
+  const centerText = { id:'centerText', afterDraw(chart){
+    if(!catLabels.length) return;
+    const { ctx, chartArea:a } = chart, x = (a.left + a.right) / 2, y = (a.top + a.bottom) / 2;
+    ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#f4f1e8'; ctx.font = '600 20px Poppins, sans-serif'; ctx.fillText(fmtBRL(catTotal), x, y - 8);
+    ctx.fillStyle = '#9aa29c'; ctx.font = '500 11.5px "DM Sans", sans-serif'; ctx.fillText('em custos', x, y + 14);
+    ctx.restore();
+  } };
   charts.costs = new Chart(costCanvas, {
     type: catLabels.length ? 'doughnut' : 'bar',
+    plugins: [centerText],
     data:{ labels: catLabels.length?catLabels:['Sem dados'], datasets:[{ data: catVals.length?catVals:[1], backgroundColor: catLabels.length? palette : ['#222624'], borderWidth:3, borderColor:'#171a19', borderRadius:6 }] },
     options:{
-      responsive:true, maintainAspectRatio:false, cutout:'62%',
-      plugins:{ legend:{ position:'bottom', labels:{ color:textColor, font:{family:'DM Sans', size:11}, boxWidth:10, padding:12 } } }
+      responsive:true, maintainAspectRatio:false, cutout:'72%',
+      plugins:{ legend:{ position:'bottom', labels:{ color:textColor, font:{family:'DM Sans', size:11.5}, boxWidth:10, padding:14, usePointStyle:true,
+        generateLabels:(chart)=> catLabels.length
+          ? Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart).map((l,i)=> Object.assign(l, { text: l.text + '  ' + fmtBRL(catVals[i]||0) }))
+          : Chart.defaults.plugins.legend.labels.generateLabels(chart) } },
+        tooltip:{ backgroundColor:'#1e2220', borderColor:'#2a302c', borderWidth:1, titleColor:'#f4f1e8', bodyColor:'#dcdfd8', padding:10, callbacks:{ label:(c)=> ' ' + c.label + ': ' + fmtBRL(Number(c.raw)) + (catTotal ? ' (' + fmtPct(c.raw / catTotal * 100) + ')' : '') } } }
     }
   });
 }
@@ -3592,7 +3623,50 @@ function saveBusiness(){
 /* ============================================================
    AFTER RENDER / INIT
    ============================================================ */
+function reducedMotion(){ return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+
+// Copia o texto do cabeçalho para cada célula (data-label): no celular a linha vira card e mostra o rótulo.
+function labelTables(){
+  document.querySelectorAll('#viewRoot .table-wrap').forEach(wrap=>{
+    const table = wrap.querySelector('table');
+    if(!table || !table.tHead) return;
+    const heads = Array.from(table.tHead.rows[0].cells).map(th=> th.textContent.trim());
+    Array.from(table.tBodies[0] ? table.tBodies[0].rows : []).forEach(tr=>{
+      Array.from(tr.cells).forEach((td,i)=>{ if(td.colSpan===1) td.setAttribute('data-label', heads[i]||''); });
+    });
+    wrap.classList.add('cardify');
+  });
+}
+
+// Os números do topo sobem até o valor ao abrir a tela; no fim o texto original é restaurado.
+function countUpStats(root){
+  root.querySelectorAll('.stat-value').forEach(el=>{
+    const final = el.textContent;
+    const m = final.replace(/\s/g,' ').match(/-?[\d.]+(,\d+)?/);
+    if(!m) return;
+    const target = parseFloat(m[0].replace(/\./g,'').replace(',','.'));
+    if(!isFinite(target) || target === 0) return;
+    const isMoney = /R\$/.test(final), isPct = /%/.test(final), neg = /-/.test(final) && target > 0;
+    const fmt = v=> isMoney ? fmtBRL(neg ? -v : v) : isPct ? fmtPct(v) : String(Math.round(v));
+    const t0 = performance.now(), dur = 650;
+    const step = now=>{
+      if(!el.isConnected) return;
+      const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = k < 1 ? fmt(target * e) : final;
+      if(k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+let lastAnimatedView = null;
 function afterRender(){
+  labelTables();
+  // anima só quando troca de tela (render também roda a cada letra digitada na busca)
+  if(state.view !== lastAnimatedView){
+    lastAnimatedView = state.view;
+    const root = document.getElementById('viewRoot');
+    if(root && !reducedMotion()){ root.classList.add('anim-in'); countUpStats(root); setTimeout(()=> root.classList.remove('anim-in'), 900); }
+  }
   if(state.view==='dashboard'){ buildDashboardCharts(); }
   else destroyCharts();
   if(state.view==='calculator'){ renderCalcResult(); }
