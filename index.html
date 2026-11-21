@@ -81,9 +81,7 @@
 html,body{height:100%;}
 /* iPhone: impede o Safari de aumentar a letra sozinho (era o que estourava valores e listas) */
 html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; }
-html{ overflow-x:hidden; overscroll-behavior:none; }
-body{ overscroll-behavior:none; }
-@supports (overflow:clip){ body{ overflow-x:clip; } }
+html, body{ overflow-x:clip; overscroll-behavior:none; }
 /* sensação de app no celular: sem zoom de toque duplo, sem arrastar pros lados, sem piscar ao tocar */
 html{ -webkit-tap-highlight-color: transparent; }
 body{ touch-action: manipulation; }
@@ -621,7 +619,8 @@ body.anim-paused .aw, body.anim-paused .aa-glow, body.anim-paused .aa-leaf{ anim
   85%{ opacity:.55; }
   100%{ transform: translate(-20px, -110vh) rotate(320deg); opacity:0; }
 }
-@media (prefers-reduced-motion: reduce){ .aw, .aa-glow, .aa-leaf{ animation:none; } .aa-leaf{ display:none; } }
+/* com "reduzir movimento" ligado no aparelho (ou economia de bateria em alguns) as ondas continuam, só mais devagar */
+@media (prefers-reduced-motion: reduce){ .aw{ animation-duration:56s !important; } .aa-glow{ animation:none; } .aa-leaf{ animation-duration:30s !important; } }
 /* preenchimento automático do navegador: mantém o campo escuro em vez de azul-claro */
 .field input:-webkit-autofill, .field input:-webkit-autofill:hover, .field input:-webkit-autofill:focus{
   -webkit-text-fill-color: var(--text); caret-color: var(--text);
